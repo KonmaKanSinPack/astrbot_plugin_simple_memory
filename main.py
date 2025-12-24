@@ -7,8 +7,8 @@ from typing import Any, Dict, List, Optional, Tuple
 from astrbot.api import logger
 from astrbot.api.event import AstrMessageEvent, filter
 from astrbot.api.star import Context, Star, register
-
-MEMORY_FILE = Path(__file__).with_name("memory_store.json")
+from openai import AsyncOpenAI
+# MEMORY_FILE = Path(__file__).with_name("memory_store.json")
 
 
 def _utc_now() -> str:
@@ -60,35 +60,49 @@ class UpsertResult:
     deleted: int = 0
 
 
-@register("simple_memory", "AstrBot", "为大模型提供结构化记忆提示词", "1.0.0")
+@register("simple_memory", "兔子", "为大模型提供结构化记忆提示词", "1.0.0")
 class SimpleMemoryPlugin(Star):
     def __init__(self, context: Context):
         super().__init__(context)
-        self.store = MemoryStore(MEMORY_FILE)
+        # self.store = MemoryStore(MEMORY_FILE)
+        self.context = context
 
     async def initialize(self):
         """插件初始化时确保记忆文件存在。"""
         _ = self.store.load()
 
-    @filter.command("memory")
-    async def memory_command(self, event: AstrMessageEvent):
+    @filter.command_group("mem")
+    def mem(self, t):
+        pass
+
+    @mem.command("")
+    def default(self, event: AstrMessageEvent):
         """生成记忆提示词或应用模型返回的记忆更新。"""
+        user_name = event.get_sender_name()
+        
         raw_message = (event.message_str or "").strip()
         subcommand, payload = self._parse_arguments(raw_message)
 
-        if subcommand == "help":
-            yield event.plain_result(self._usage_manual())
-            return
-
-        if subcommand == "apply":
-            result = self._handle_apply(payload)
-            yield event.plain_result(result)
-            return
-
         prompt = self._handle_prompt(payload, event)
         yield event.plain_result(prompt)
+    
+    @mem.command("help")
+    async def help(self, event: AstrMessageEvent):
+        yield event.plain_result(self._usage_manual())
+        return
+
+    @mem.command("apply")
+    async def apply(self, event: AstrMessageEvent):
+        """生成记忆提示词或应用模型返回的记忆更新。"""
+        raw_message = (event.message_str or "").strip()
+        subcommand, payload = self._parse_arguments(raw_message)
+            
+        result = self._handle_apply(payload)
+        yield event.plain_result(result)
+        return
 
     def _parse_arguments(self, message: str) -> Tuple[str, str]:
+        #TODO: 这个不是我要的效果，估计废弃
         normalized = message.lstrip("/").strip()
         if normalized.lower().startswith("memory"):
             normalized = normalized[6:].strip()
@@ -120,7 +134,9 @@ class SimpleMemoryPlugin(Star):
         if not conversation:
             return "请在 prompt 子命令后附带对话文本，例如 /memory prompt 最近的对话内容。"
 
-        state = self.store.load()
+        user_name = event.get_sender_name()
+        mem_file_path = Path(__file__).with_name(f"memory_store_{user_name}.json")
+        state = MemoryStore(mem_file_path).load()
         logger.info("创建记忆提示词，操作者: %s", event.get_sender_name())
 
         memory_snapshot = json.dumps(state, ensure_ascii=False, indent=2)
@@ -278,6 +294,13 @@ class SimpleMemoryPlugin(Star):
         bucket.clear()
         bucket.extend(index.values())
         return result
+
+    async def get_all_conversation(self, event: AstrMessageEvent) -> str:
+        uid = event.unified_msg_origin
+        conv_mgr = self.context.conversation_manager
+        curr_cid = await conv_mgr.get_curr_conversation_id(uid)
+        conversation = await conv_mgr.get_conversation(uid, curr_cid)  # Conversation
+        return conversation.history
 
     def _generate_entry_id(self, is_long_term: bool) -> str:
         prefix = "lt" if is_long_term else "st"
