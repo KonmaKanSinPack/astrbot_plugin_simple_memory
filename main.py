@@ -93,10 +93,7 @@ class SimpleMemoryPlugin(Star):
         )
 
         logger.info(f"测试一下：{req}")
-        # if req.payload.get("system_prompt"):
-        #     req.payload["system_prompt"] += mem_prompt
-        # else:
-        #     req.payload["system_prompt"] = mem_prompt
+        req.system_prompt += f"\n{mem_prompt}"
 
 
     @filter.command_group("mem")
