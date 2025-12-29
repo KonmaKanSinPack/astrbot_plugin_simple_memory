@@ -86,6 +86,7 @@ class SimpleMemoryPlugin(Star):
 
         mem_result = await self.send_prompt(event)
         logger.info(f"mem_result:{mem_result}")
+        logger.info(self._handle_apply(event, mem_result))
         # yield event.plain_result(prompt)
     
     @mem.command("help")
@@ -99,7 +100,7 @@ class SimpleMemoryPlugin(Star):
         raw_message = (event.message_str or "").strip()
         subcommand, payload = self._parse_arguments(raw_message)
             
-        result = self._handle_apply(payload)
+        result = self._handle_apply(event, payload)
         yield event.plain_result(result)
         return
 
@@ -179,7 +180,7 @@ class SimpleMemoryPlugin(Star):
 
         memory_snapshot = json.dumps(state, ensure_ascii=False, indent=2)
         template = (
-            "你是一名 AstrBot 的记忆管理员，任务是基于最新对话刷新长期/短期记忆。\n"
+            "请你完成一个任务，任务是基于最新对话刷新长期/短期记忆。\n"
             "请阅读以下内容:\n\n"
             # "[对话记录]\n"
             # f"{conversation}\n\n"
@@ -199,7 +200,7 @@ class SimpleMemoryPlugin(Star):
             "  },\n"
             "  \"long_term\": {\n"
             "    \"upsert\": [{\n"
-            "      \"id\": \"沿用或留空由系统生成\",\n"
+            "      \"id\": \"沿用或由系统生成\",\n"
             "      \"content\": \"记忆文本\",\n"
             "      \"category\": \"profile|preference|task|fact\",\n"
             "      \"importance\": 1-5,\n"
@@ -214,7 +215,7 @@ class SimpleMemoryPlugin(Star):
 
         return template
 
-    def _handle_apply(self, payload_text: str) -> str:
+    def _handle_apply(self, event, payload_text: str) -> str:
         payload_text = payload_text.strip()
         if not payload_text:
             return "请提供大模型返回的 JSON 内容。"
@@ -228,7 +229,10 @@ class SimpleMemoryPlugin(Star):
         except json.JSONDecodeError as exc:
             return f"JSON 解析失败: {exc}"
 
-        state = self.store.load()
+        uid = event.unified_msg_origin
+        mem_file_path = Path(__file__).with_name(f"memory_store_{uid}.json")
+        state = MemoryStore(mem_file_path).load()
+        
         report = self._apply_operations(state, operations)
         self.store.save(state)
         return report
