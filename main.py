@@ -1,4 +1,5 @@
 import json
+import ProviderRequest
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -75,6 +76,27 @@ class SimpleMemoryPlugin(Star):
     # async def initialize(self):
     #     """插件初始化时确保记忆文件存在。"""
     #     _ = self.store.load()
+
+    @filter.on_llm_request()
+    async def add_mem_prompt(self, event: AstrMessageEvent, req: ProviderRequest):
+        """在发送给大模型的请求中添加记忆提示词。"""
+        uid = event.unified_msg_origin
+        mem_file_path = Path(__file__).with_name(f"memory_store_{uid}.json")
+        state = MemoryStore(mem_file_path).load()
+        memory_snapshot = json.dumps(state, ensure_ascii=False, indent=2)
+
+        mem_prompt = (
+            "\n\n[记忆信息]\n"
+            "以下是与你的长期和短期记忆相关的信息，请在生成回复时参考这些记忆内容，以保持一致性和连贯性。\n"
+            f"{memory_snapshot}\n"
+            "请根据这些记忆信息调整你的回答，确保与你的既有知识相符。\n"
+        )
+
+        if req.payload.get("system_prompt"):
+            req.payload["system_prompt"] += mem_prompt
+        else:
+            req.payload["system_prompt"] = mem_prompt
+
 
     @filter.command_group("mem")
     def mem(self, t):
