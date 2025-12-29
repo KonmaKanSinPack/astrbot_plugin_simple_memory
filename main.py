@@ -8,7 +8,7 @@ from astrbot.api import logger
 from astrbot.api.event import AstrMessageEvent, filter
 from astrbot.api.star import Context, Star, register
 from openai import AsyncOpenAI
-# MEMORY_FILE = Path(__file__).with_name("memory_store.json")
+MEMORY_FILE = Path(__file__).with_name("memory_store.json")
 
 from astrbot.core.agent.message import (
     AssistantMessageSegment,
@@ -69,12 +69,12 @@ class UpsertResult:
 class SimpleMemoryPlugin(Star):
     def __init__(self, context: Context):
         super().__init__(context)
-        # self.store = MemoryStore(MEMORY_FILE)
+        self.store = MemoryStore(MEMORY_FILE)
         self.context = context
 
-    async def initialize(self):
-        """插件初始化时确保记忆文件存在。"""
-        _ = self.store.load()
+    # async def initialize(self):
+    #     """插件初始化时确保记忆文件存在。"""
+    #     _ = self.store.load()
 
     @filter.command_group("mem")
     def mem(self, t):
