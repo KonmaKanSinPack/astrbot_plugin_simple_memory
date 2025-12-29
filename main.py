@@ -149,9 +149,7 @@ class SimpleMemoryPlugin(Star):
 
         #发送信息到llm
         sys_msg = f"{system_prompt}"
-        user_msg = UserMessageSegment(content=[TextPart(text=msg)])
         provider = self.context.get_using_provider()
-        # logger.info(f"msg:{msg},\n history:{history}")
         llm_resp = await provider.text_chat(
                 prompt=mem_prompt,
                 session_id=None,
@@ -160,13 +158,13 @@ class SimpleMemoryPlugin(Star):
                 func_tool=None,
                 system_prompt=sys_msg,
             )
-        await conv_mgr.add_message_pair(
-            cid=curr_cid,
-            user_message=user_msg,
-            assistant_message=AssistantMessageSegment(
-                content=[TextPart(text=llm_resp.completion_text)]
-            ),
-        )
+        # await conv_mgr.add_message_pair(
+        #     cid=curr_cid,
+        #     user_message=user_msg,
+        #     assistant_message=AssistantMessageSegment(
+        #         content=[TextPart(text=llm_resp.completion_text)]
+        #     ),
+        # )
         return llm_resp.completion_text
 
     def _handle_prompt(self, event: AstrMessageEvent, history: str,) -> str:
