@@ -108,8 +108,8 @@ class SimpleMemoryPlugin(Star):
 
         mem_result = await self.send_prompt(event)
         logger.info(f"mem_result:{mem_result}")
-        logger.info(self._handle_apply(event, mem_result))
-        # yield event.plain_result(prompt)
+        handle_result = self._handle_apply(event, mem_result)
+        await self.context.send_message(event.unified_msg_origin,handle_result)
     
     @mem.command("help")
     async def help(self, event: AstrMessageEvent):
@@ -202,7 +202,7 @@ class SimpleMemoryPlugin(Star):
 
         memory_snapshot = json.dumps(state, ensure_ascii=False, indent=2)
         template = (
-            "请你完成一个任务，任务是基于最新对话刷新长期/短期记忆。\n"
+            "请你基于最新对话刷新长期/短期记忆。\n"
             "请阅读以下内容:\n\n"
             # "[对话记录]\n"
             # f"{conversation}\n\n"
