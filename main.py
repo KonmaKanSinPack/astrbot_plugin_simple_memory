@@ -92,10 +92,11 @@ class SimpleMemoryPlugin(Star):
             "请根据这些记忆信息调整你的回答，确保与你的既有知识相符。\n"
         )
 
-        if req.payload.get("system_prompt"):
-            req.payload["system_prompt"] += mem_prompt
-        else:
-            req.payload["system_prompt"] = mem_prompt
+        logger.info(f"测试一下：{req}")
+        # if req.payload.get("system_prompt"):
+        #     req.payload["system_prompt"] += mem_prompt
+        # else:
+        #     req.payload["system_prompt"] = mem_prompt
 
 
     @filter.command_group("mem")
