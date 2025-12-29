@@ -94,7 +94,7 @@ class SimpleMemoryPlugin(Star):
 
         logger.info(f"测试一下：{req}")
         req.system_prompt += f"\n{mem_prompt}"
-
+        logger.info(f"测试里下：{req}")
 
     @filter.command_group("mem")
     def mem(self, t):
