@@ -1,5 +1,5 @@
 import json
-import ProviderRequest
+from astrbot.api.provider import ProviderRequest
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
