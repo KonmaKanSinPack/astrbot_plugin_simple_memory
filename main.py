@@ -110,7 +110,7 @@ class SimpleMemoryPlugin(Star):
         logger.info(f"mem_result:{mem_result}")
         handle_result = self._handle_apply(event, mem_result)
         message_chain = MessageChain().message(handle_result)
-        await self.context.send_message(event.unified_msg_origin,handle_result)
+        await self.context.send_message(event.unified_msg_origin,message_chain)
     
     @mem.command("help")
     async def help(self, event: AstrMessageEvent):
