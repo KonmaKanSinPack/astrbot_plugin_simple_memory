@@ -92,7 +92,7 @@ class SimpleMemoryPlugin(Star):
         )
 
         req.system_prompt += f"\n{mem_prompt}"
-
+        logger.info(f"看看结果:{req.system_prompt}")
 
     @filter.command_group("mem")
     def mem(self, t):
