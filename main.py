@@ -80,8 +80,8 @@ class SimpleMemoryPlugin(Star):
     def mem(self, t):
         pass
 
-    @mem.command("")
-    async def default(self, event: AstrMessageEvent):
+    @mem.command("gen")
+    async def gen(self, event: AstrMessageEvent):
         """生成记忆提示词或应用模型返回的记忆更新。"""
 
         mem_result = await self.send_prompt(event)
