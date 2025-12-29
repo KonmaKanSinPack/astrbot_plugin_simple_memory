@@ -331,6 +331,62 @@ class SimpleMemoryPlugin(Star):
         bucket.extend(index.values())
         return result
 
+    async def get_persona_system_prompt(self, session: str) -> str:
+        """获取人格系统提示词
+
+        Args:
+            session: 会话ID
+
+        Returns:
+            人格系统提示词
+        """
+        base_system_prompt = ""
+        try:
+            # 尝试获取当前会话的人格设置
+            uid = session  # session 就是 unified_msg_origin
+            curr_cid = await self.context.conversation_manager.get_curr_conversation_id(
+                uid
+            )
+
+            # 获取默认人格设置
+            default_persona_obj = self.context.provider_manager.selected_default_persona
+
+            if curr_cid:
+                conversation = await self.context.conversation_manager.get_conversation(
+                    uid, curr_cid
+                )
+
+                if (
+                    conversation
+                    and conversation.persona_id
+                    and conversation.persona_id != "[%None]"
+                ):
+                    # 有指定人格，尝试获取人格的系统提示词
+                    personas = self.context.provider_manager.personas
+                    if personas:
+                        for persona in personas:
+                            if (
+                                hasattr(persona, "name")
+                                and persona.name == conversation.persona_id
+                            ):
+                                base_system_prompt = getattr(persona, "prompt", "")
+                                
+                                break
+
+            # 如果没有获取到人格提示词，尝试使用默认人格
+            if (
+                not base_system_prompt
+                and default_persona_obj
+                and default_persona_obj.get("prompt")
+            ):
+                base_system_prompt = default_persona_obj["prompt"]
+                
+
+        except Exception as e:
+            logger.warning(f"获取人格系统提示词失败: {e}")
+
+        return base_system_prompt
+
     async def get_all_conversation(self, event: AstrMessageEvent) -> str:
         uid = event.unified_msg_origin
         conv_mgr = self.context.conversation_manager
