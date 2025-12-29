@@ -238,6 +238,7 @@ class SimpleMemoryPlugin(Star):
         uid = event.unified_msg_origin
         mem_file_path = Path(__file__).with_name(f"memory_store_{uid}.json")
         store = MemoryStore(mem_file_path)
+        store.load()
         payload_text = payload_text.strip()
         if not payload_text:
             return "请提供大模型返回的 JSON 内容。"
