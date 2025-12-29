@@ -101,11 +101,12 @@ class SimpleMemoryPlugin(Star):
         pass
 
     @mem.command("gen")
-    async def gen(self, event: AstrMessageEvent):
+    async def gen(self, event: AstrMessageEvent, use_full=""):
         """生成记忆提示词或应用模型返回的记忆更新。"""
 
-        mem_result = await self.send_prompt(event)
+        mem_result = await self.send_prompt(event, full=(use_full == "--full"))
         logger.info(f"mem_result:{mem_result}")
+        
         handle_result = self._handle_apply(event, mem_result)
         message_chain = MessageChain().message(handle_result)
         await self.context.send_message(event.unified_msg_origin,message_chain)
@@ -153,7 +154,7 @@ class SimpleMemoryPlugin(Star):
             "建议流程: prompt -> 将提示词贴给大模型 -> 把模型 JSON 回复交给 apply。"
         )
 
-    async def send_prompt(self, event):
+    async def send_prompt(self, event, full=False):
         uid = event.unified_msg_origin
         provider_id = await self.context.get_current_chat_provider_id(uid)
         logger.info(f"umo:{uid}")
@@ -167,7 +168,7 @@ class SimpleMemoryPlugin(Star):
         #获取人格
         system_prompt = await self.get_persona_system_prompt(uid)
 
-        mem_prompt = self._handle_prompt(event, history)
+        mem_prompt = self._handle_prompt(event, history, full)
 
         #发送信息到llm
         sys_msg = f"{system_prompt}"
@@ -189,19 +190,23 @@ class SimpleMemoryPlugin(Star):
         # )
         return llm_resp.completion_text
 
-    def _handle_prompt(self, event: AstrMessageEvent, history: str,) -> str:
+    def _handle_prompt(self, event: AstrMessageEvent, history: str, full=False) -> str:
         conversation = history
         # if not conversation:
         #     return "请在 prompt 子命令后附带对话文本，例如 /memory prompt 最近的对话内容。"
 
         uid = event.unified_msg_origin
         mem_file_path = Path(__file__).with_name(f"memory_store_{uid}.json")
+        if not mem_file_path.exists() or full:
+            task_prompt = "请你基于全部对话刷新长期/短期记忆。\n"
+        else:
+            task_prompt = "请你基于最新对话刷新长期/短期记忆。\n"
         state = MemoryStore(mem_file_path).load()
         logger.info("创建记忆提示词，操作者: %s", uid)
 
         memory_snapshot = json.dumps(state, ensure_ascii=False, indent=2)
         template = (
-            "请你基于最新对话刷新长期/短期记忆。\n"
+            task_prompt +
             "请阅读以下内容:\n\n"
             # "[对话记录]\n"
             # f"{conversation}\n\n"
