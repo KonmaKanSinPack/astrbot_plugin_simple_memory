@@ -10,6 +10,11 @@ from astrbot.api.star import Context, Star, register
 from openai import AsyncOpenAI
 # MEMORY_FILE = Path(__file__).with_name("memory_store.json")
 
+from astrbot.core.agent.message import (
+    AssistantMessageSegment,
+    UserMessageSegment,
+    TextPart,
+)
 
 def _utc_now() -> str:
     return datetime.now(timezone.utc).isoformat()
@@ -76,15 +81,12 @@ class SimpleMemoryPlugin(Star):
         pass
 
     @mem.command("")
-    def default(self, event: AstrMessageEvent):
+    async def default(self, event: AstrMessageEvent):
         """生成记忆提示词或应用模型返回的记忆更新。"""
-        user_name = event.get_sender_name()
-        
-        raw_message = (event.message_str or "").strip()
-        subcommand, payload = self._parse_arguments(raw_message)
 
-        prompt = self._handle_prompt(payload, event)
-        yield event.plain_result(prompt)
+        mem_result = await self.send_prompt(event)
+        logger.info(f"mem_result:{mem_result}")
+        # yield event.plain_result(prompt)
     
     @mem.command("help")
     async def help(self, event: AstrMessageEvent):
@@ -129,24 +131,63 @@ class SimpleMemoryPlugin(Star):
             "建议流程: prompt -> 将提示词贴给大模型 -> 把模型 JSON 回复交给 apply。"
         )
 
-    def _handle_prompt(self, conversation: str, event: AstrMessageEvent) -> str:
-        conversation = conversation.strip()
+    async def send_prompt(self, event):
+        uid = event.unified_msg_origin
+        provider_id = await self.context.get_current_chat_provider_id(uid)
+        logger.info(f"umo:{uid}")
+
+        #获取会话历史
+        conv_mgr = self.context.conversation_manager
+        curr_cid = await conv_mgr.get_curr_conversation_id(uid)
+        conversation = await conv_mgr.get_conversation(uid, curr_cid)  # Conversation
+        history = json.loads(conversation.history) if conversation and conversation.history else []
+
+        #获取人格
+        system_prompt = await self.get_persona_system_prompt(uid)
+
+        mem_prompt = self._handle_prompt(event, history)
+
+        #发送信息到llm
+        sys_msg = f"{system_prompt}"
+        user_msg = UserMessageSegment(content=[TextPart(text=msg)])
+        provider = self.context.get_using_provider()
+        # logger.info(f"msg:{msg},\n history:{history}")
+        llm_resp = await provider.text_chat(
+                prompt=mem_prompt,
+                session_id=None,
+                contexts=history,
+                image_urls=[],
+                func_tool=None,
+                system_prompt=sys_msg,
+            )
+        await conv_mgr.add_message_pair(
+            cid=curr_cid,
+            user_message=user_msg,
+            assistant_message=AssistantMessageSegment(
+                content=[TextPart(text=llm_resp.completion_text)]
+            ),
+        )
+        return llm_resp.completion_text
+
+    def _handle_prompt(self, event: AstrMessageEvent, history: str,) -> str:
+        conversation = history.strip()
         if not conversation:
             return "请在 prompt 子命令后附带对话文本，例如 /memory prompt 最近的对话内容。"
 
-        user_name = event.get_sender_name()
-        mem_file_path = Path(__file__).with_name(f"memory_store_{user_name}.json")
+        uid = event.unified_msg_origin
+        mem_file_path = Path(__file__).with_name(f"memory_store_{uid}.json")
         state = MemoryStore(mem_file_path).load()
-        logger.info("创建记忆提示词，操作者: %s", event.get_sender_name())
+        logger.info("创建记忆提示词，操作者: %s", uid)
 
         memory_snapshot = json.dumps(state, ensure_ascii=False, indent=2)
         template = (
             "你是一名 AstrBot 的记忆管理员，任务是基于最新对话刷新长期/短期记忆。\n"
             "请阅读以下内容:\n\n"
-            "[对话记录]\n"
-            f"{conversation}\n\n"
+            # "[对话记录]\n"
+            # f"{conversation}\n\n"
             "[现有记忆 JSON]\n"
             f"{memory_snapshot}\n\n"
+            "结合历史对话记录，更新记忆。\n\n"
             "[你的目标]\n"
             "1. 判断需要新增、更新或删除的记忆点。\n"
             "2. 长期记忆用于稳定画像/长久事实；短期记忆用于阶段性任务和暂存信息。\n"
@@ -173,12 +214,7 @@ class SimpleMemoryPlugin(Star):
             "若无需操作，请返回空的 upsert/delete 并说明理由。"
         )
 
-        return (
-            "以下为可直接投喂给大模型的 Prompt:\n"
-            "----------------------------------------\n"
-            f"{template}\n"
-            "----------------------------------------"
-        )
+        return template
 
     def _handle_apply(self, payload_text: str) -> str:
         payload_text = payload_text.strip()
