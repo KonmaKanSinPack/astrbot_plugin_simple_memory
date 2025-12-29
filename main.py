@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
-
+from astrbot.api.event import MessageChain
 from astrbot.api import logger
 from astrbot.api.event import AstrMessageEvent, filter
 from astrbot.api.star import Context, Star, register
@@ -109,6 +109,7 @@ class SimpleMemoryPlugin(Star):
         mem_result = await self.send_prompt(event)
         logger.info(f"mem_result:{mem_result}")
         handle_result = self._handle_apply(event, mem_result)
+        message_chain = MessageChain().message(handle_result)
         await self.context.send_message(event.unified_msg_origin,handle_result)
     
     @mem.command("help")
