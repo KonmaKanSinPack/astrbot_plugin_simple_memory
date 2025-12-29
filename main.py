@@ -170,9 +170,9 @@ class SimpleMemoryPlugin(Star):
         return llm_resp.completion_text
 
     def _handle_prompt(self, event: AstrMessageEvent, history: str,) -> str:
-        conversation = history.strip()
-        if not conversation:
-            return "请在 prompt 子命令后附带对话文本，例如 /memory prompt 最近的对话内容。"
+        conversation = history
+        # if not conversation:
+        #     return "请在 prompt 子命令后附带对话文本，例如 /memory prompt 最近的对话内容。"
 
         uid = event.unified_msg_origin
         mem_file_path = Path(__file__).with_name(f"memory_store_{uid}.json")
