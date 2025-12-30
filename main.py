@@ -263,7 +263,7 @@ class SimpleMemoryPlugin(Star):
         mem_file_path = Path(__file__).with_name(f"memory_store_{uid}.json")
         state = MemoryStore(mem_file_path).load()
         
-        report = self._apply_operations(store, state, operations)
+        report = self._apply_operations(state, operations)
         store.save(state)
         return report
 
@@ -282,7 +282,7 @@ class SimpleMemoryPlugin(Star):
             return stripped
         return None
 
-    def _apply_operations(self, store, state: Dict[str, Any], operations: Dict[str, Any]) -> str:
+    def _apply_operations(self, state: Dict[str, Any], operations: Dict[str, Any]) -> str:
         now = _utc_now()
         report_lines: List[str] = []
 
@@ -307,7 +307,7 @@ class SimpleMemoryPlugin(Star):
             st_high = summary_block.get("short_term_highlights", "无")
             report_lines.append("概述:\n- 长期: " + lt_high + "\n- 短期: " + st_high)
 
-        report_lines.append(f"记忆文件位置: {store.path}")
+        report_lines.append(f"记忆文件位置: {state.path}")
 
         return "记忆已更新:\n" + "\n".join(report_lines)
 
