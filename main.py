@@ -102,7 +102,7 @@ class SimpleMemoryPlugin(Star):
     @mem.command("gen")
     async def gen(self, event: AstrMessageEvent, use_full=""):
         """生成记忆提示词或应用模型返回的记忆更新。"""
-
+        logger.info(f"收到生成记忆请求, full={use_full}")
         mem_result = await self.send_prompt(event, full=(use_full == "--full"))
         logger.info(f"生成的记忆:{mem_result}")
         
@@ -241,10 +241,6 @@ class SimpleMemoryPlugin(Star):
         return template
 
     def _handle_apply(self, event, payload_text: str) -> str:
-        uid = event.unified_msg_origin
-        mem_file_path = Path(__file__).with_name(f"memory_store_{uid}.json")
-        store = MemoryStore(mem_file_path)
-        store.load()
         payload_text = payload_text.strip()
         if not payload_text:
             return "请提供大模型返回的 JSON 内容。"
@@ -260,10 +256,11 @@ class SimpleMemoryPlugin(Star):
 
         uid = event.unified_msg_origin
         mem_file_path = Path(__file__).with_name(f"memory_store_{uid}.json")
-        state = MemoryStore(mem_file_path).load()
-        
-        report = self._apply_operations(store, operations)
-        store.save(store)
+        store = MemoryStore(mem_file_path)
+        state = store.load()
+
+        report = self._apply_operations(state, operations)
+        store.save(state)
         return report
 
     def _extract_json_block(self, text: str) -> Optional[str]:
