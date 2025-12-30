@@ -94,6 +94,7 @@ class SimpleMemoryPlugin(Star):
         )
 
         req.system_prompt += f"\n{mem_prompt}"
+        logger.info(f"当前的系统提示词:{req.system_prompt}")
 
     @filter.command_group("mem")
     def mem(self, t):
@@ -102,11 +103,12 @@ class SimpleMemoryPlugin(Star):
     @mem.command("gen")
     async def gen(self, event: AstrMessageEvent, use_full=""):
         """生成记忆提示词或应用模型返回的记忆更新。"""
-        logger.info(f"收到生成记忆请求, full={use_full}")
+
         mem_result = await self.send_prompt(event, full=(use_full == "--full"))
         logger.info(f"生成的记忆:{mem_result}")
         
         handle_result = self._handle_apply(event, mem_result)
+        logger.info(f"应用记忆结果:{handle_result}")
         message_chain = MessageChain().message(handle_result)
         await self.context.send_message(event.unified_msg_origin,message_chain)
     
