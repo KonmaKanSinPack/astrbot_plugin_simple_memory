@@ -305,7 +305,7 @@ class SimpleMemoryPlugin(Star):
             st_high = summary_block.get("short_term_highlights", "无")
             report_lines.append("概述:\n- 长期: " + lt_high + "\n- 短期: " + st_high)
 
-        report_lines.append(f"记忆文件位置: {state.path}")
+        # report_lines.append(f"记忆文件位置: {state.path}")
 
         return "记忆已更新:\n" + "\n".join(report_lines)
 
