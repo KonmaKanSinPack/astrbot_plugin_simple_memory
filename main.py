@@ -111,6 +111,7 @@ class SimpleMemoryPlugin(Star):
         logger.info(f"应用记忆结果:{handle_result}")
         message_chain = MessageChain().message(handle_result)
         await self.context.send_message(event.unified_msg_origin,message_chain)
+        event.stop_event()
     
     @mem.command("help")
     async def help(self, event: AstrMessageEvent):
