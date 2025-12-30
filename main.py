@@ -263,8 +263,8 @@ class SimpleMemoryPlugin(Star):
         mem_file_path = Path(__file__).with_name(f"memory_store_{uid}.json")
         state = MemoryStore(mem_file_path).load()
         
-        report = self._apply_operations(state, operations)
-        store.save(state)
+        report = self._apply_operations(store, operations)
+        store.save(store)
         return report
 
     def _extract_json_block(self, text: str) -> Optional[str]:
