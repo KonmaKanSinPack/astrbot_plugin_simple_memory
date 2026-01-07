@@ -9,7 +9,6 @@ from astrbot.api import logger
 from astrbot.api.event import AstrMessageEvent, filter
 from astrbot.api.star import Context, Star, register
 from openai import AsyncOpenAI
-MEMORY_FILE = Path(__file__).with_name("memory_store.json")
 
 from astrbot.core.agent.message import (
     AssistantMessageSegment,
@@ -99,6 +98,14 @@ class SimpleMemoryPlugin(Star):
     @filter.command_group("mem")
     def mem(self, t):
         pass
+    
+    @mem.command("check")
+    async def check(self, event: AstrMessageEvent):
+        uid = event.unified_msg_origin
+        mem_file_path = Path(__file__).with_name(f"memory_store_{uid}.json")
+        state = MemoryStore(mem_file_path).load()
+        memory_snapshot = json.dumps(state, ensure_ascii=False, indent=2)
+        await self.context.send_message(uid,MessageChain().message(f"当前记忆内容:\n{memory_snapshot}"))
 
     @mem.command("gen")
     async def gen(self, event: AstrMessageEvent, use_full=""):
