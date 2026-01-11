@@ -106,6 +106,7 @@ class SimpleMemoryPlugin(Star):
             await self.context.send_message(uid,MessageChain().message("尚未进行过记忆更新。"))
         else:
             await self.context.send_message(uid,MessageChain().message(f"上次更新内容:\n{self.last_update[uid]}"))
+        event.stop_event()
 
     @mem.command("gen")
     async def gen(self, event: AstrMessageEvent, use_full: str = ""):
