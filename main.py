@@ -10,6 +10,7 @@ from astrbot.api.event import AstrMessageEvent, filter
 from astrbot.api.star import Context, Star, register
 from openai import AsyncOpenAI
 
+from astrbot.api.star import StarTools
 from astrbot.core.agent.message import (
     AssistantMessageSegment,
     UserMessageSegment,
@@ -81,7 +82,7 @@ class SimpleMemoryPlugin(Star):
     async def add_mem_prompt(self, event: AstrMessageEvent, req: ProviderRequest, *_, **__):
         """在发送给大模型的请求中添加记忆提示词。"""
         uid = event.unified_msg_origin
-        mem_file_path = Path(__file__).with_name(f"memory_store_{uid}.json")
+        mem_file_path = StarTools.get_data_dir() / f"memory_store_{uid}.json"
         state = MemoryStore(mem_file_path).load()
         memory_snapshot = json.dumps(state, ensure_ascii=False, indent=2)
 
@@ -160,9 +161,9 @@ class SimpleMemoryPlugin(Star):
     def _usage_manual(self) -> str:
         return (
             "记忆指令使用方式:\n"
-            "1. /memory prompt <对话记录> 生成给大模型使用的提示词。\n"
-            "2. /memory apply <JSON> 应用大模型返回的记忆更新结果。\n"
-            "建议流程: prompt -> 将提示词贴给大模型 -> 把模型 JSON 回复交给 apply。"
+            "1. /mem gen 生成给大模型使用的长中短期记忆。使用--full参数可使用全部对话历史。\n"
+            "2. /mem check  应用大模型返回的记忆更新结果。\n"
+            "建议流程: /mem gen -> 让大模型总结并应用记忆 -> /mem check 查看结果。"
         )
 
     async def send_prompt(self, event, full=False):
@@ -207,7 +208,7 @@ class SimpleMemoryPlugin(Star):
         #     return "请在 prompt 子命令后附带对话文本，例如 /memory prompt 最近的对话内容。"
 
         uid = event.unified_msg_origin
-        mem_file_path = Path(__file__).with_name(f"memory_store_{uid}.json")
+        mem_file_path = StarTools.get_data_dir() / f"memory_store_{uid}.json"
         if not mem_file_path.exists() or full:
             task_prompt = "请你基于全部对话刷新长期/中期/短期记忆。\n"
         else:
@@ -269,7 +270,7 @@ class SimpleMemoryPlugin(Star):
             return f"JSON 解析失败: {exc}"
 
         uid = event.unified_msg_origin
-        mem_file_path = Path(__file__).with_name(f"memory_store_{uid}.json")
+        mem_file_path = StarTools.get_data_dir() / f"memory_store_{uid}.json"
         store = MemoryStore(mem_file_path)
         state = store.load()
 
