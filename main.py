@@ -108,7 +108,7 @@ class SimpleMemoryPlugin(Star):
             await self.context.send_message(uid,MessageChain().message(f"上次更新内容:\n{self.last_update[uid]}"))
 
     @mem.command("gen")
-    async def gen(self, event: AstrMessageEvent, use_full: str = "", *args, **kwargs):
+    async def gen(self, event: AstrMessageEvent, use_full: str = ""):
         """生成记忆提示词或应用模型返回的记忆更新。"""
 
         # use_full = kwargs.get("use_full") if "use_full" in kwargs else (args[0] if args else "")
