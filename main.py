@@ -54,12 +54,9 @@ class MemoryStore:
 
     def save(self, state: Dict[str, Any]) -> None:
         self.path.parent.mkdir(parents=True, exist_ok=True)
-        logger.info(f"要写入的内容：{state}")
         self.path.write_text(
             json.dumps(state, ensure_ascii=False, indent=2), encoding="utf-8"
         )
-        logger.info(f"查看结果：{self.path.read_text(encoding='utf-8')}")
-
 
 @dataclass
 class UpsertResult:
