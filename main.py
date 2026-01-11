@@ -25,6 +25,7 @@ def _default_state() -> Dict[str, Any]:
     now = _utc_now()
     return {
         "long_term": [],
+        "medium_term": [],
         "short_term": [],
         "metadata": {
             "version": 1,
