@@ -72,13 +72,13 @@ class SimpleMemoryPlugin(Star):
     def __init__(self, context: Context):
         super().__init__(context)
         self.context = context
-
+        self.last_update: Dict[str, str] = {}
     # async def initialize(self):
     #     """插件初始化时确保记忆文件存在。"""
     #     _ = self.store.load()
 
     @filter.on_llm_request()
-    async def add_mem_prompt(self, event: AstrMessageEvent, req: ProviderRequest):
+    async def add_mem_prompt(self, event: AstrMessageEvent, req: ProviderRequest, *_, **__):
         """在发送给大模型的请求中添加记忆提示词。"""
         uid = event.unified_msg_origin
         mem_file_path = Path(__file__).with_name(f"memory_store_{uid}.json")
@@ -87,7 +87,7 @@ class SimpleMemoryPlugin(Star):
 
         mem_prompt = (
             "\n\n[记忆信息]\n"
-            "以下是与你的长期和短期记忆相关的信息，请在生成回复时参考这些记忆内容，以保持一致性和连贯性。\n"
+            "以下是与你的长期,中期和短期记忆相关的信息，请在生成回复时参考这些记忆内容，以保持一致性和连贯性。\n"
             f"{memory_snapshot}\n"
             "请根据这些记忆信息调整你的回答，确保与你的既有知识相符。\n"
         )
@@ -102,17 +102,18 @@ class SimpleMemoryPlugin(Star):
     @mem.command("check")
     async def check(self, event: AstrMessageEvent):
         uid = event.unified_msg_origin
-        mem_file_path = Path(__file__).with_name(f"memory_store_{uid}.json")
-        state = MemoryStore(mem_file_path).load()
-        memory_snapshot = json.dumps(state, ensure_ascii=False, indent=2)
-        await self.context.send_message(uid,MessageChain().message(f"当前记忆内容:\n{memory_snapshot}"))
+        if self.last_update.get(uid) is None:
+            await self.context.send_message(uid,MessageChain().message("尚未进行过记忆更新。"))
+        else:
+            await self.context.send_message(uid,MessageChain().message(f"上次更新内容:\n{self.last_update[uid]}"))
 
     @mem.command("gen")
-    async def gen(self, event: AstrMessageEvent, use_full=""):
+    async def gen(self, event: AstrMessageEvent, *args, **kwargs):
         """生成记忆提示词或应用模型返回的记忆更新。"""
 
-        mem_result = await self.send_prompt(event, full=(use_full == "--full"))
-        logger.info(f"生成的记忆:{mem_result}")
+        use_full = kwargs.get("use_full") if "use_full" in kwargs else (args[0] if args else "")
+        mem_result = await self.send_prompt(event, full=(str(use_full).strip() == "--full"))
+        self.last_update[event.unified_msg_origin] = mem_result
         
         handle_result = self._handle_apply(event, mem_result)
         logger.info(f"应用记忆结果:{handle_result}")
@@ -166,7 +167,7 @@ class SimpleMemoryPlugin(Star):
     async def send_prompt(self, event, full=False):
         uid = event.unified_msg_origin
         provider_id = await self.context.get_current_chat_provider_id(uid)
-        logger.info(f"umo:{uid}")
+        logger.info(f"uid:{uid}")
 
         #获取会话历史
         conv_mgr = self.context.conversation_manager
@@ -207,9 +208,9 @@ class SimpleMemoryPlugin(Star):
         uid = event.unified_msg_origin
         mem_file_path = Path(__file__).with_name(f"memory_store_{uid}.json")
         if not mem_file_path.exists() or full:
-            task_prompt = "请你基于全部对话刷新长期/短期记忆。\n"
+            task_prompt = "请你基于全部对话刷新长期/中期/短期记忆。\n"
         else:
-            task_prompt = "请你基于最新对话刷新长期/短期记忆。\n"
+            task_prompt = "请你基于最新对话刷新长期/中期/短期记忆。\n"
         state = MemoryStore(mem_file_path).load()
         logger.info("创建记忆提示词，操作者: %s", uid)
 
@@ -226,11 +227,12 @@ class SimpleMemoryPlugin(Star):
             "1. 判断需要新增、更新或删除的记忆点。\n"
             "2. 长期记忆用于稳定画像/长久事实；短期记忆用于阶段性任务和暂存信息。\n"
             "3. 控制记忆数量，删除过期或冲突内容。\n"
-            "4. 输出 JSON，字段如下: summary、long_term、short_term。\n\n"
+            "4. 输出 JSON，字段如下: summary、long_term、medium_term、short_term。\n\n"
             "JSON 字段格式:\n"
             "{\n"
             "  \"summary\": {\n"
             "    \"long_term_highlights\": \"<概述长期变更>\",\n"
+             "    \"medium_term_highlights\": \"<概述中期变更>\",\n"
             "    \"short_term_highlights\": \"<概述短期变更>\"\n"
             "  },\n"
             "  \"long_term\": {\n"
@@ -243,6 +245,7 @@ class SimpleMemoryPlugin(Star):
             "    }],\n"
             "    \"delete\": [\"要删除的 id\"]\n"
             "  },\n"
+            "  \"medium_term\": { 与 long_term 相同结构 }\n"
             "  \"short_term\": { 与 long_term 相同结构 }\n"
             "}\n\n"
             "若无需操作，请返回空的 upsert/delete 并说明理由。"
@@ -295,6 +298,9 @@ class SimpleMemoryPlugin(Star):
         lt_result = self._upsert_and_delete(
             state.setdefault("long_term", []), operations.get("long_term", {}), True, now
         )
+        mt_result = self._upsert_and_delete(
+            state.setdefault("medium_term", []), operations.get("medium_term", {}), True, now
+        )
         st_result = self._upsert_and_delete(
             state.setdefault("short_term", []), operations.get("short_term", {}), False, now
         )
@@ -306,12 +312,14 @@ class SimpleMemoryPlugin(Star):
         state.setdefault("metadata", {})["last_update"] = now
 
         report_lines.append(self._format_report_line("长期", lt_result))
+        report_lines.append(self._format_report_line("中期", mt_result))
         report_lines.append(self._format_report_line("短期", st_result))
 
         if isinstance(summary_block, dict) and summary_block:
             lt_high = summary_block.get("long_term_highlights", "无")
+            mt_high = summary_block.get("medium_term_highlights", "无")
             st_high = summary_block.get("short_term_highlights", "无")
-            report_lines.append("概述:\n- 长期: " + lt_high + "\n- 短期: " + st_high)
+            report_lines.append("概述:\n- 长期: " + lt_high + "\n- 中期: " + mt_high + "\n- 短期: " + st_high)
 
         # report_lines.append(f"记忆文件位置: {state.path}")
 
