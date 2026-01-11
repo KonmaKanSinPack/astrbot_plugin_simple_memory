@@ -35,8 +35,8 @@
 		],
 		"delete": ["lt-123"]
 	},
-	"medium_term:{ 同上 }"
-	"short_term": { 同上 }"
+	"medium_term: { 同上 }"
+	"short_term: { 同上 }"
 }
 ```
 
