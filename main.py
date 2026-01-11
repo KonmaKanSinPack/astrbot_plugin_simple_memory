@@ -246,7 +246,7 @@ class SimpleMemoryPlugin(Star):
             "    }],\n"
             "    \"delete\": [\"要删除的 id\"]\n"
             "  },\n"
-            "  \"medium_term\": { 与 long_term 相同结构 }\n"
+            "  \"medium_term\": { 与 long_term 相同结构 },\n"
             "  \"short_term\": { 与 long_term 相同结构 }\n"
             "}\n\n"
             "若无需操作，请返回空的 upsert/delete 并说明理由。"
