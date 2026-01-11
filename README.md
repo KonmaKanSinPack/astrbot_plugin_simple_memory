@@ -11,7 +11,7 @@
 2. 在 AstrBot 中启用插件后发送 `/memory help` 查看指令说明。
 3. 使用`/memory check`查看上次更新的内容（增删改）
 
-##TODO
+## TODO
 1. 使用 `/memory prompt <对话记录>` 生成一段可直接投喂给大模型的 Prompt，里面包含当前记忆快照与要求的 JSON 格式。（未实装）
 2. 等待大模型返回更新 JSON 后，使用 `/memory apply <JSON 或 ```json 代码块>`，插件会完成新增 / 更新 / 删除并汇总结果。（未实装）
 
