@@ -7,10 +7,10 @@
 - 接收模型 JSON，自动更新本地记忆并给出报告。
 
 ## 使用方法
-
-1. 在 AstrBot 中启用插件后发送 `/memory help` 查看指令说明。
-2. 使用 `/memory prompt <对话记录>` 生成一段可直接投喂给大模型的 Prompt，里面包含当前记忆快照与要求的 JSON 格式。
-3. 等待大模型返回更新 JSON 后，使用 `/memory apply <JSON 或 ```json 代码块>`，插件会完成新增 / 更新 / 删除并汇总结果。
+1. 使用`/memory gen`自动根据最新对话内容生成并存储记忆；添加参数`/memory gen --full`可根据全部对话内容生成记忆
+2. 在 AstrBot 中启用插件后发送 `/memory help` 查看指令说明。
+1. 使用 `/memory prompt <对话记录>` 生成一段可直接投喂给大模型的 Prompt，里面包含当前记忆快照与要求的 JSON 格式。（未实装）
+4. 等待大模型返回更新 JSON 后，使用 `/memory apply <JSON 或 ```json 代码块>`，插件会完成新增 / 更新 / 删除并汇总结果。（未实装）
 
 ## JSON 结构约定
 
