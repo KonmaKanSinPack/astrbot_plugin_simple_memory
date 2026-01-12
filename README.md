@@ -10,6 +10,7 @@
 1. 使用`/memory gen`自动根据最新对话内容生成并存储记忆；添加参数`/memory gen --full`可根据全部对话内容生成记忆
 2. 在 AstrBot 中启用插件后发送 `/memory help` 查看指令说明。
 3. 使用`/memory check`查看上次更新的内容（增删改）
+4. 新增配置文件，现在可以自己自定义记忆生成prompt了
 
 ## TODO
 1. 使用 `/memory prompt <对话记录>` 生成一段可直接投喂给大模型的 Prompt，里面包含当前记忆快照与要求的 JSON 格式。（未实装）
