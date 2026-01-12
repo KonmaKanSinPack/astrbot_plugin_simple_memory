@@ -242,7 +242,7 @@ class SimpleMemoryPlugin(Star):
             "}\n\n"
             "若无需操作，请返回空的 upsert/delete 并说明理由。"
         )
-
+        logger.info(f"记忆提示词内容:{template}")
         return template
 
     def _handle_apply(self, event, payload_text: str) -> str:
