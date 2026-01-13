@@ -24,6 +24,7 @@ def _utc_now() -> str:
 def _default_state() -> Dict[str, Any]:
     now = _utc_now()
     return {
+        "core_memory": [],
         "long_term": [],
         "medium_term": [],
         "short_term": [],
@@ -86,10 +87,10 @@ class SimpleMemoryPlugin(Star):
         memory_snapshot = json.dumps(state, ensure_ascii=False, indent=2)
 
         mem_prompt = (
-            "\n\n[记忆信息]\n"
-            "以下是与你的长期,中期和短期记忆相关的信息，请在生成回复时参考这些记忆内容，以保持一致性和连贯性。\n"
+            "\n\n[Memory Info]\n"
+            "You have access to the following memory information: core memory, long-term, medium-term, and short-term memories. Use this context when generating responses to maintain consistency and coherence across interactions.\n"
             f"{memory_snapshot}\n"
-            "请根据这些记忆信息调整你的回答，确保与你的既有知识相符。\n"
+            "Adjust your responses based on this memory information to ensure they align with your existing knowledge.\n"
         )
 
         req.system_prompt += f"\n{mem_prompt}"
@@ -219,15 +220,21 @@ class SimpleMemoryPlugin(Star):
         template = (
             task_prompt +
             self.config.mem_prompt+
-            "output JSON, fields includes: summary、long_term、medium_term、short_term。\n\n"
+            "output JSON with the following sections (each is required and serves a distinct purpose):\n"
+            "- summary: concise highlights of any changes across memories.\n"
+            "- core_memory: enduring identity/profile/preferences/facts; anchor for consistency and rarely changes.\n"
+            "- long_term: durable knowledge/goals worth keeping across many sessions; update cautiously.\n"
+            "- medium_term: active themes/tasks spanning recent sessions that aid continuity.\n"
+            "- short_term: freshest context from the latest exchanges; can be pruned frequently.\n\n"
             "JSON Format:\n"
             "{\n"
             "  \"summary\": {\n"
+            "    \"core_memory_highlights\": \"<概述核心记忆变更>\",\n"
             "    \"long_term_highlights\": \"<概述长期变更>\",\n"
-             "    \"medium_term_highlights\": \"<概述中期变更>\",\n"
+            "    \"medium_term_highlights\": \"<概述中期变更>\",\n"
             "    \"short_term_highlights\": \"<概述短期变更>\"\n"
             "  },\n"
-            "  \"long_term\": {\n"
+            "  \"core_memory\": {\n"
             "    \"upsert\": [{\n"
             "      \"id\": \"沿用或由系统生成\",\n"
             "      \"content\": \"记忆文本\",\n"
@@ -237,8 +244,9 @@ class SimpleMemoryPlugin(Star):
             "    }],\n"
             "    \"delete\": [\"要删除的 id\"]\n"
             "  },\n"
-            "  \"medium_term\": { 与 long_term 相同结构 },\n"
-            "  \"short_term\": { 与 long_term 相同结构 }\n"
+            "  \"long_term\": { 与 core_memory 相同结构 },\n"
+            "  \"medium_term\": { 与 core_memory 相同结构 },\n"
+            "  \"short_term\": { 与 core_memory 相同结构 }\n"
             "}\n\n"
             "若无需操作，请返回空的 upsert/delete 并说明理由。"
         )
