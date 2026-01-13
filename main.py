@@ -110,11 +110,11 @@ class SimpleMemoryPlugin(Star):
         event.stop_event()
 
     @mem.command("gen")
-    async def gen(self, event: AstrMessageEvent, use_full: str = ""):
+    async def gen(self, event: AstrMessageEvent, extra_prompr: str="", use_full: str = ""):
         """生成记忆提示词或应用模型返回的记忆更新。"""
 
         # use_full = kwargs.get("use_full") if "use_full" in kwargs else (args[0] if args else "")
-        mem_result = await self.send_prompt(event, full=(str(use_full).strip() == "--full"))
+        mem_result = await self.send_prompt(event, extra_prompt=extra_prompr, full=(str(use_full).strip() == "--full"))
         self.last_update[event.unified_msg_origin] = mem_result
         
         handle_result = self._handle_apply(event, mem_result)
@@ -166,7 +166,7 @@ class SimpleMemoryPlugin(Star):
             "建议流程: /mem gen -> 让大模型总结并应用记忆 -> /mem check 查看结果。"
         )
 
-    async def send_prompt(self, event, full=False):
+    async def send_prompt(self, event, extra_prompt="", full=False):
         uid = event.unified_msg_origin
         provider_id = await self.context.get_current_chat_provider_id(uid)
         logger.info(f"uid:{uid}")
@@ -181,6 +181,8 @@ class SimpleMemoryPlugin(Star):
         system_prompt = await self.get_persona_system_prompt(uid)
 
         mem_prompt = self._handle_prompt(event, history, full)
+        if extra_prompt != "":
+            mem_prompt = extra_prompt + "\n" + mem_prompt
 
         #发送信息到llm
         sys_msg = f"{system_prompt}"
