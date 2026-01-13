@@ -295,6 +295,10 @@ class SimpleMemoryPlugin(Star):
         now = _utc_now()
         report_lines: List[str] = []
 
+        
+        core_result = self._upsert_and_delete(
+            state.setdefault("core_memory", []), operations.get("core_memory", {}), True, now
+        )
         lt_result = self._upsert_and_delete(
             state.setdefault("long_term", []), operations.get("long_term", {}), True, now
         )
@@ -311,15 +315,17 @@ class SimpleMemoryPlugin(Star):
 
         state.setdefault("metadata", {})["last_update"] = now
 
+        report_lines.append(self._format_report_line("核心记忆", core_result))
         report_lines.append(self._format_report_line("长期", lt_result))
         report_lines.append(self._format_report_line("中期", mt_result))
         report_lines.append(self._format_report_line("短期", st_result))
 
         if isinstance(summary_block, dict) and summary_block:
+            core_high = summary_block.get("core_memory_highlights", "无")
             lt_high = summary_block.get("long_term_highlights", "无")
             mt_high = summary_block.get("medium_term_highlights", "无")
             st_high = summary_block.get("short_term_highlights", "无")
-            report_lines.append("概述:\n- 长期: " + lt_high + "\n- 中期: " + mt_high + "\n- 短期: " + st_high)
+            report_lines.append("概述:\n- 核心: " + core_high + "\n- 长期: " + lt_high + "\n- 中期: " + mt_high + "\n- 短期: " + st_high)
 
         # report_lines.append(f"记忆文件位置: {state.path}")
 
