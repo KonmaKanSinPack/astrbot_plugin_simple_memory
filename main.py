@@ -9,7 +9,7 @@ from astrbot.api import logger
 from astrbot.api.event import AstrMessageEvent, filter
 from astrbot.api.star import Context, Star, register
 from openai import AsyncOpenAI
-
+import json_repair
 from astrbot.api.star import StarTools
 from astrbot.core.agent.message import (
     AssistantMessageSegment,
@@ -252,7 +252,7 @@ class SimpleMemoryPlugin(Star):
             "}\n\n"
             "若无需操作，请返回空的 upsert/delete 并说明理由。"
         )
-        logger.info(f"记忆提示词内容:{template}")
+        # logger.info(f"记忆提示词内容:{template}")
         return template
 
     def _handle_apply(self, event, payload_text: str) -> str:
@@ -265,9 +265,15 @@ class SimpleMemoryPlugin(Star):
             return "未能解析 JSON，请直接粘贴模型输出或 ```json ``` 代码块。"
 
         try:
-            operations = json.loads(json_text)
-        except json.JSONDecodeError as exc:
-            return f"JSON 解析失败: {exc}"
+            # json_repair.loads() returns parsed object directly (dict/list)
+            operations = json_repair.loads(json_text)
+            logger.info("JSON parsed successfully: %s", operations)
+        except Exception as e:
+            logger.warning("JSON repair failed, fallback to standard parser: %s", e)
+            try:
+                operations = json.loads(json_text.strip())
+            except json.JSONDecodeError as exc:
+                return f"JSON parsing failed: {exc}"
 
         uid = event.unified_msg_origin
         mem_file_path = StarTools.get_data_dir() / f"memory_store_{uid}.json"
