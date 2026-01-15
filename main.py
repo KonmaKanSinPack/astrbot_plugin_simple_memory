@@ -94,7 +94,7 @@ class SimpleMemoryPlugin(Star):
             "Adjust your responses based on this memory information to ensure they align with your existing knowledge.\n"
         )
 
-        req.system_prompt += f"\n{mem_prompt}"
+        req.system_prompt = req.system_prompt + f"\n{mem_prompt}"
         # logger.info(f"当前的系统提示词:{req.system_prompt}")
 
     @filter.command_group("mem")
