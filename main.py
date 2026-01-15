@@ -17,6 +17,7 @@ from astrbot.core.agent.message import (
     TextPart,
 )
 from astrbot.api import AstrBotConfig
+import os
 def _utc_now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
@@ -127,6 +128,25 @@ class SimpleMemoryPlugin(Star):
     async def help(self, event: AstrMessageEvent):
         yield event.plain_result(self._usage_manual())
         return
+    
+    @mem.command("rebuild")
+    async def mem_rebuild(self, event):
+        uid = event.unified_msg_origin
+        # mem_file_path = StarTools.get_data_dir() / f"memory_store_{uid}.json"
+        mem_path = StarTools.get_data_dir() / f"memory_store_{uid}.json"
+        pre_mem_path = StarTools.get_data_dir() / f"memory_store_{uid}_pre.json"
+        try:
+            os.rename(mem_path, pre_mem_path)
+            os.remove(mem_path)
+        except Exception as e:
+            logger.info(f"发生错误:{e}")
+            event.stop_event()
+
+        pre_mem = MemoryStore(pre_mem_path)
+        state = pre_mem.load()
+        await self.gen(event, extra_prompt=f"这是你之前的记忆，根据这些记忆重构现在的记忆:{state}")
+
+        
 
     @mem.command("apply")
     async def apply(self, event: AstrMessageEvent):
