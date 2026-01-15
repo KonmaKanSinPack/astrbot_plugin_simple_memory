@@ -111,11 +111,11 @@ class SimpleMemoryPlugin(Star):
         event.stop_event()
 
     @mem.command("gen")
-    async def gen(self, event: AstrMessageEvent, extra_prompr: str="", use_full: str = ""):
+    async def gen(self, event: AstrMessageEvent, extra_prompt: str="", use_full: str = ""):
         """生成记忆提示词或应用模型返回的记忆更新。"""
 
         # use_full = kwargs.get("use_full") if "use_full" in kwargs else (args[0] if args else "")
-        mem_result = await self.send_prompt(event, extra_prompt=extra_prompr, full=(str(use_full).strip() == "--full"))
+        mem_result = await self.send_prompt(event, extra_prompt=extra_prompt, full=(str(use_full).strip() == "--full"))
         self.last_update[event.unified_msg_origin] = mem_result
         
         handle_result = self._handle_apply(event, mem_result)
