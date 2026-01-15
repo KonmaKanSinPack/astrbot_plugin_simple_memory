@@ -135,16 +135,20 @@ class SimpleMemoryPlugin(Star):
         # mem_file_path = StarTools.get_data_dir() / f"memory_store_{uid}.json"
         mem_path = StarTools.get_data_dir() / f"memory_store_{uid}.json"
         pre_mem_path = StarTools.get_data_dir() / f"memory_store_{uid}_pre.json"
+        if os.path.exists(pre_mem_path):
+            state_pre = MemoryStore(pre_mem_path).load()
+        else:
+            state_pre = MemoryStore(mem_path).load()
         try:
             os.rename(mem_path, pre_mem_path)
             os.remove(mem_path)
         except Exception as e:
             logger.info(f"发生错误:{e}")
-            event.stop_event()
 
-        pre_mem = MemoryStore(pre_mem_path)
-        state = pre_mem.load()
-        await self.gen(event, extra_prompt=f"这是你之前的记忆，根据这些记忆重构现在的记忆:{state}")
+        # pre_mem = MemoryStore(pre_mem_path)
+        # state = pre_mem.load()
+        await self.gen(event, extra_prompt=f"这是你之前的记忆，根据这些记忆重构现在的记忆:{state_pre}")
+        event.stop_event()
 
         
 
