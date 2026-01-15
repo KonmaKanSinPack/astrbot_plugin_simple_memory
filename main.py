@@ -219,8 +219,12 @@ class SimpleMemoryPlugin(Star):
         logger.info("创建记忆提示词，操作者: %s", uid)
         
         memory_snapshot = json.dumps(state, ensure_ascii=False, indent=2)
+        cur_mem_prompt = "your current memories are shown below, make sure that new memory doesn't exist in current memory and delete redunant/outmoded memories everytime.\n" \
+        "**[current memories]**\n"
+        f"{memory_snapshot}"
         template = (
             task_prompt +
+            cur_mem_prompt + 
             self.config.mem_prompt+
             "output JSON with the following sections (each is required and serves a distinct purpose):\n"
             "- summary: concise highlights of any changes across memories.\n"
