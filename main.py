@@ -86,8 +86,10 @@ class SimpleMemoryPlugin(Star):
         mem_file_path = StarTools.get_data_dir() / f"memory_store_{uid}.json"
         state = MemoryStore(mem_file_path).load()
         memory_snapshot = json.dumps(state, ensure_ascii=False, indent=2)
+
         ori_system_prompt = req.system_prompt or ""
         logger.info(f"原系统提示词_SimpleMemory:{ori_system_prompt}")
+
         mem_prompt = (
             "\n\n[Memory Info]\n"
             "You have access to the following memory information: core memory, long-term, medium-term, and short-term memories. Use this context when generating responses to maintain consistency and coherence across interactions.\n"
@@ -204,6 +206,7 @@ class SimpleMemoryPlugin(Star):
 
         #获取人格
         system_prompt = await self.get_persona_system_prompt(uid)
+        logger.info(f"人设提示词:{system_prompt}")
 
         mem_prompt = self._handle_prompt(event, history, full)
         if extra_prompt != "":
