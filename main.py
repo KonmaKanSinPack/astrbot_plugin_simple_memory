@@ -98,7 +98,7 @@ class SimpleMemoryPlugin(Star):
         )
 
         req.system_prompt = ori_system_prompt + f"\n{mem_prompt}"
-        # logger.info(f"当前的系统提示词_SimpleMemory:{req.system_prompt}")
+        logger.info(f"当前的系统提示词_SimpleMemory:{req.system_prompt}")
 
     @filter.command_group("mem")
     def mem(self, t):
