@@ -86,7 +86,8 @@ class SimpleMemoryPlugin(Star):
         mem_file_path = StarTools.get_data_dir() / f"memory_store_{uid}.json"
         state = MemoryStore(mem_file_path).load()
         memory_snapshot = json.dumps(state, ensure_ascii=False, indent=2)
-
+        ori_system_prompt = req.system_prompt or ""
+        logger.info(f"原系统提示词_SimpleMemory:{ori_system_prompt}")
         mem_prompt = (
             "\n\n[Memory Info]\n"
             "You have access to the following memory information: core memory, long-term, medium-term, and short-term memories. Use this context when generating responses to maintain consistency and coherence across interactions.\n"
@@ -94,8 +95,8 @@ class SimpleMemoryPlugin(Star):
             "Adjust your responses based on this memory information to ensure they align with your existing knowledge.\n"
         )
 
-        req.system_prompt = req.system_prompt + f"\n{mem_prompt}"
-        # logger.info(f"当前的系统提示词:{req.system_prompt}")
+        req.system_prompt = ori_system_prompt + f"\n{mem_prompt}"
+        logger.info(f"当前的系统提示词_SimpleMemory:{req.system_prompt}")
 
     @filter.command_group("mem")
     def mem(self, t):
