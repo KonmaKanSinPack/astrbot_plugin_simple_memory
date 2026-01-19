@@ -83,7 +83,7 @@ class SimpleMemoryPlugin(Star):
     async def add_mem_prompt(self, event: AstrMessageEvent, req: ProviderRequest, *_, **__):
         """在发送给大模型的请求中添加记忆提示词。"""
         uid = event.unified_msg_origin
-        mem_file_path = get_astrbot_data_path() / f"memory_store_{uid}.json"
+        mem_file_path = get_astrbot_data_path() + f"memory_store_{uid}.json"
         state = MemoryStore(mem_file_path).load()
         memory_snapshot = json.dumps(state, ensure_ascii=False, indent=2)
 
@@ -145,8 +145,8 @@ class SimpleMemoryPlugin(Star):
         适用于需要重构记忆的场景
         '''
         uid = event.unified_msg_origin
-        mem_path = get_astrbot_data_path() / f"memory_store_{uid}.json"
-        pre_mem_path = get_astrbot_data_path() / f"memory_store_{uid}_pre.json"
+        mem_path = get_astrbot_data_path() + f"memory_store_{uid}.json"
+        pre_mem_path = get_astrbot_data_path() + f"memory_store_{uid}_pre.json"
         if os.path.exists(pre_mem_path):
             state_pre = MemoryStore(pre_mem_path).load()
         else:
@@ -247,7 +247,7 @@ class SimpleMemoryPlugin(Star):
         #     return "请在 prompt 子命令后附带对话文本，例如 /memory prompt 最近的对话内容。"
 
         uid = event.unified_msg_origin
-        mem_file_path = get_astrbot_data_path() / f"memory_store_{uid}.json"
+        mem_file_path = get_astrbot_data_path() + f"memory_store_{uid}.json"
         if not mem_file_path.exists() or full:
             task_prompt = "please refresh long-term/medium-term/short-term memory based on the entire conversation.\n"
         else:
@@ -317,7 +317,7 @@ class SimpleMemoryPlugin(Star):
                 return f"JSON parsing failed: {exc}"
 
         uid = event.unified_msg_origin
-        mem_file_path = get_astrbot_data_path() / f"memory_store_{uid}.json"
+        mem_file_path = get_astrbot_data_path() + f"memory_store_{uid}.json"
         store = MemoryStore(mem_file_path)
         state = store.load()
 
