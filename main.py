@@ -218,7 +218,7 @@ class SimpleMemoryPlugin(Star):
         person_prompt = await self.context.persona_manager.get_default_persona_v3(uid)
         if not person_prompt:
             person_prompt = self.context.provider_manager.selected_default_persona["prompt"]
-        logger.info(f"人设提示词:{person_prompt}")
+        # logger.info(f"人设提示词:{person_prompt}")
 
         mem_prompt = self._handle_prompt(event, history, full)
         if extra_prompt != "":
@@ -259,9 +259,13 @@ class SimpleMemoryPlugin(Star):
         logger.info("创建记忆提示词，操作者: %s", uid)
         
         memory_snapshot = json.dumps(state, ensure_ascii=False, indent=2)
-        cur_mem_prompt = "your current memories are shown below, make sure that new memory doesn't exist in current memory and delete redunant/outmoded memories everytime.\n" \
-        "**[current memories]**\n"
-        f"{memory_snapshot}"
+        cur_mem_prompt = (
+            "Below are your current memories. When updating, strictly avoid adding any duplicate or already existing memories. "
+            "Actively identify and forget memories that are outdated, irrelevant, or of low importance. "
+            "Always keep the memory set concise and up-to-date, removing any redundant or obsolete information.\n"
+            "**[current memories]**\n"
+            f"{memory_snapshot}"
+        )
         
         template = (
             task_prompt +
@@ -297,7 +301,7 @@ class SimpleMemoryPlugin(Star):
             "}\n\n"
             "若无需操作，请返回空的 upsert/delete 并说明理由。"
         )
-        # logger.info(f"记忆提示词内容:{template}")
+        logger.info(f"记忆提示词内容:{template}")
         return template
 
     def _handle_apply(self, event, payload_text: str) -> str:
