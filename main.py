@@ -214,15 +214,18 @@ class SimpleMemoryPlugin(Star):
         history = json.loads(conversation.history) if conversation and conversation.history else []
 
         #获取人格
-        system_prompt = await self.get_persona_system_prompt(uid)
-        logger.info(f"人设提示词:{system_prompt}")
+        # system_prompt = await self.get_persona_system_prompt(uid)
+        person_prompt = await self.context.persona_manager.get_default_persona_v3(uid)
+        if not person_prompt:
+            person_prompt = self.context.provider_manager.selected_default_persona["prompt"]
+        logger.info(f"人设提示词:{person_prompt}")
 
         mem_prompt = self._handle_prompt(event, history, full)
         if extra_prompt != "":
             mem_prompt = extra_prompt + "\n" + mem_prompt
 
         #发送信息到llm
-        sys_msg = f"{system_prompt}"
+        sys_msg = f"{person_prompt}"
         provider = self.context.get_using_provider()
         llm_resp = await provider.text_chat(
                 prompt=mem_prompt,
@@ -259,6 +262,7 @@ class SimpleMemoryPlugin(Star):
         cur_mem_prompt = "your current memories are shown below, make sure that new memory doesn't exist in current memory and delete redunant/outmoded memories everytime.\n" \
         "**[current memories]**\n"
         f"{memory_snapshot}"
+        
         template = (
             task_prompt +
             cur_mem_prompt + 
