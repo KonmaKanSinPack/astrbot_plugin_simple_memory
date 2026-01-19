@@ -248,7 +248,7 @@ class SimpleMemoryPlugin(Star):
 
         uid = event.unified_msg_origin
         mem_file_path = get_astrbot_data_path() + f"memory_store_{uid}.json"
-        if not mem_file_path.exists() or full:
+        if not Path(mem_file_path).exists() or full:
             task_prompt = "please refresh long-term/medium-term/short-term memory based on the entire conversation.\n"
         else:
             task_prompt = "please refresh long-term/medium-term/short-term memory based on the latest conversation.\n"
