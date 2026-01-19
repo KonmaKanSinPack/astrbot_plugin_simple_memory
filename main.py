@@ -215,7 +215,7 @@ class SimpleMemoryPlugin(Star):
 
         #获取人格
         system_prompt = await self.get_persona_system_prompt(uid)
-        # logger.info(f"人设提示词:{system_prompt}")
+        logger.info(f"人设提示词:{system_prompt}")
 
         mem_prompt = self._handle_prompt(event, history, full)
         if extra_prompt != "":
