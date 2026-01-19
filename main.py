@@ -10,7 +10,6 @@ from astrbot.api.event import AstrMessageEvent, filter
 from astrbot.api.star import Context, Star, register
 from openai import AsyncOpenAI
 import json_repair
-from astrbot.api.star import StarTools
 from astrbot.core.agent.message import (
     AssistantMessageSegment,
     UserMessageSegment,
@@ -18,6 +17,7 @@ from astrbot.core.agent.message import (
 )
 from astrbot.api import AstrBotConfig
 import os
+from astrbot.core.utils.astrbot_path import get_astrbot_data_path
 def _utc_now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
@@ -83,7 +83,7 @@ class SimpleMemoryPlugin(Star):
     async def add_mem_prompt(self, event: AstrMessageEvent, req: ProviderRequest, *_, **__):
         """在发送给大模型的请求中添加记忆提示词。"""
         uid = event.unified_msg_origin
-        mem_file_path = StarTools.get_data_dir() / f"memory_store_{uid}.json"
+        mem_file_path = get_astrbot_data_path() / f"memory_store_{uid}.json"
         state = MemoryStore(mem_file_path).load()
         memory_snapshot = json.dumps(state, ensure_ascii=False, indent=2)
 
@@ -106,6 +106,9 @@ class SimpleMemoryPlugin(Star):
     
     @mem.command("check")
     async def check(self, event: AstrMessageEvent):
+        '''
+        查看上次记忆更新内容
+        '''
         uid = event.unified_msg_origin
         if self.last_update.get(uid) is None:
             await self.context.send_message(uid,MessageChain().message("尚未进行过记忆更新。"))
@@ -115,7 +118,10 @@ class SimpleMemoryPlugin(Star):
 
     @mem.command("gen")
     async def gen(self, event: AstrMessageEvent, extra_prompt: str="", use_full: str = ""):
-        """生成记忆提示词或应用模型返回的记忆更新。"""
+        """生成记忆提示词或应用模型返回的记忆更新。
+        可以在命令后添加临时加入的extra prompt，还可以附加 --full 参数以使用全部对话历史。
+        (e.g. /mem gen 删除无效记忆 --full)
+        """
 
         # use_full = kwargs.get("use_full") if "use_full" in kwargs else (args[0] if args else "")
         mem_result = await self.send_prompt(event, extra_prompt=extra_prompt, full=(str(use_full).strip() == "--full"))
@@ -134,10 +140,13 @@ class SimpleMemoryPlugin(Star):
     
     @mem.command("rebuild")
     async def mem_rebuild(self, event):
+        '''
+        重构记忆，将当前记忆备份为pre文件，然后根据备份重构记忆
+        适用于需要重构记忆的场景
+        '''
         uid = event.unified_msg_origin
-        # mem_file_path = StarTools.get_data_dir() / f"memory_store_{uid}.json"
-        mem_path = StarTools.get_data_dir() / f"memory_store_{uid}.json"
-        pre_mem_path = StarTools.get_data_dir() / f"memory_store_{uid}_pre.json"
+        mem_path = get_astrbot_data_path() / f"memory_store_{uid}.json"
+        pre_mem_path = get_astrbot_data_path() / f"memory_store_{uid}_pre.json"
         if os.path.exists(pre_mem_path):
             state_pre = MemoryStore(pre_mem_path).load()
         else:
@@ -196,7 +205,7 @@ class SimpleMemoryPlugin(Star):
     async def send_prompt(self, event, extra_prompt="", full=False):
         uid = event.unified_msg_origin
         provider_id = await self.context.get_current_chat_provider_id(uid)
-        logger.info(f"uid:{uid}")
+        # logger.info(f"uid:{uid}")
 
         #获取会话历史
         conv_mgr = self.context.conversation_manager
@@ -238,7 +247,7 @@ class SimpleMemoryPlugin(Star):
         #     return "请在 prompt 子命令后附带对话文本，例如 /memory prompt 最近的对话内容。"
 
         uid = event.unified_msg_origin
-        mem_file_path = StarTools.get_data_dir() / f"memory_store_{uid}.json"
+        mem_file_path = get_astrbot_data_path() / f"memory_store_{uid}.json"
         if not mem_file_path.exists() or full:
             task_prompt = "please refresh long-term/medium-term/short-term memory based on the entire conversation.\n"
         else:
@@ -308,7 +317,7 @@ class SimpleMemoryPlugin(Star):
                 return f"JSON parsing failed: {exc}"
 
         uid = event.unified_msg_origin
-        mem_file_path = StarTools.get_data_dir() / f"memory_store_{uid}.json"
+        mem_file_path = get_astrbot_data_path() / f"memory_store_{uid}.json"
         store = MemoryStore(mem_file_path)
         state = store.load()
 
