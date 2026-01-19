@@ -260,10 +260,14 @@ class SimpleMemoryPlugin(Star):
         
         memory_snapshot = json.dumps(state, ensure_ascii=False, indent=2)
         cur_mem_prompt = (
-            "Below are your current memories. When updating, strictly avoid adding any duplicate or already existing memories. "
-            "Actively identify and forget memories that are outdated, irrelevant, or of low importance. "
-            "Always keep the memory set concise and up-to-date, removing any redundant or obsolete information.\n"
-            "**[current memories]**\n"
+            "You are an intelligent agent with a structured memory system. Below is your current memory snapshot.\n"
+            "When updating your memories, follow these principles:\n"
+            "1. Do NOT add any memory that already exists or is highly similar to an existing one.\n"
+            "2. Proactively identify and forget memories that are outdated, irrelevant, or of low value.\n"
+            "3. Keep your memory concise, focused, and up-to-date. Remove any redundant, obsolete, or trivial information.\n"
+            "4. Only retain information that is useful for future reasoning, continuity, or identity.\n"
+            "5. When in doubt, prefer fewer, higher-quality memories over more, lower-quality ones.\n"
+            "\n**[Current Memory Snapshot]**\n"
             f"{memory_snapshot}"
         )
         
