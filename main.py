@@ -39,8 +39,8 @@ def _default_state() -> Dict[str, Any]:
 
 
 class MemoryStore:
-    def __init__(self, path: Path):
-        self.path = path
+    def __init__(self, path: str):
+        self.path = Path(path)
 
     def load(self) -> Dict[str, Any]:
         if not self.path.exists():
