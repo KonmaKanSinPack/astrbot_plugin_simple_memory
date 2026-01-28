@@ -28,7 +28,6 @@ def _default_state() -> Dict[str, Any]:
         "core_memory": [],
         "long_term": [],
         "medium_term": [],
-        "short_term": [],
         "metadata": {
             "version": 1,
             "created_at": now,
@@ -92,7 +91,7 @@ class SimpleMemoryPlugin(Star):
 
         mem_prompt = (
             "\n\n[Memory Info]\n"
-            "You have access to the following memory information: core memory, long-term, medium-term, and short-term memories. Use this context when generating responses to maintain consistency and coherence across interactions.\n"
+            "You have access to the following memory information: core memory, long-term and medium-term memories. Use this context when generating responses to maintain consistency and coherence across interactions.\n"
             f"{memory_snapshot}\n"
             "Adjust your responses based on this memory information to ensure they align with your existing knowledge.\n"
         )
@@ -252,9 +251,9 @@ class SimpleMemoryPlugin(Star):
         uid = event.unified_msg_origin
         mem_file_path = get_astrbot_data_path() + f"memory_store_{uid}.json"
         if not Path(mem_file_path).exists() or full:
-            task_prompt = "please refresh long-term/medium-term/short-term memory based on the entire conversation.\n"
+            task_prompt = "please refresh core/long-term/medium-term memory based on the entire conversation.\n"
         else:
-            task_prompt = "please refresh long-term/medium-term/short-term memory based on the latest conversation.\n"
+            task_prompt = "please refresh core/long-term/medium-term memory based on the latest conversation.\n"
         state = MemoryStore(mem_file_path).load()
         logger.info("创建记忆提示词，操作者: %s", uid)
         
@@ -267,6 +266,8 @@ class SimpleMemoryPlugin(Star):
             "3. Keep your memory concise, focused, and up-to-date. Remove any redundant, obsolete, or trivial information.\n"
             "4. Only retain information that is useful for future reasoning, continuity, or identity.\n"
             "5. When in doubt, prefer fewer, higher-quality memories over more, lower-quality ones.\n"
+            "6. Ensure that core memory remains stable and only changes when absolutely necessary.\n"
+            "7. short-term memory is not needed to generate. Make sure all memory you generate is either core, long-term, or medium-term.\n"
             "\n**[Current Memory Snapshot]**\n"
             f"{memory_snapshot}"
         )
@@ -280,14 +281,12 @@ class SimpleMemoryPlugin(Star):
             "- core_memory: enduring identity/profile/preferences/facts; anchor for consistency and rarely changes.\n"
             "- long_term: durable knowledge/goals worth keeping across many sessions; update cautiously.\n"
             "- medium_term: active themes/tasks spanning recent sessions that aid continuity.\n"
-            "- short_term: freshest context from the latest exchanges; can be pruned frequently.\n\n"
             "JSON Format:\n"
             "{\n"
             "  \"summary\": {\n"
             "    \"core_memory_highlights\": \"<summary of core memory changes>\",\n"
             "    \"long_term_highlights\": \"<summary of long-term changes>\",\n"
             "    \"medium_term_highlights\": \"<summary of medium-term changes>\",\n"
-            "    \"short_term_highlights\": \"<summary of short-term changes>\"\n"
             "  },\n"
             "  \"core_memory\": {\n"
             "    \"upsert\": [{\n"
@@ -301,7 +300,6 @@ class SimpleMemoryPlugin(Star):
             "  },\n"
             "  \"long_term\": { same structure as core_memory },\n"
             "  \"medium_term\": { same structure as core_memory },\n"
-            "  \"short_term\": { same structure as core_memory }\n"
             "}\n\n"
             "If no changes are needed, return empty upsert/delete and explain why in the summary."
         )
@@ -366,9 +364,6 @@ class SimpleMemoryPlugin(Star):
         mt_result = self._upsert_and_delete(
             state.setdefault("medium_term", []), operations.get("medium_term", {}), True, now
         )
-        st_result = self._upsert_and_delete(
-            state.setdefault("short_term", []), operations.get("short_term", {}), False, now
-        )
 
         summary_block = operations.get("summary")
         if isinstance(summary_block, dict):
@@ -379,14 +374,12 @@ class SimpleMemoryPlugin(Star):
         report_lines.append(self._format_report_line("核心记忆", core_result))
         report_lines.append(self._format_report_line("长期", lt_result))
         report_lines.append(self._format_report_line("中期", mt_result))
-        report_lines.append(self._format_report_line("短期", st_result))
 
         if isinstance(summary_block, dict) and summary_block:
             core_high = summary_block.get("core_memory_highlights", "无")
             lt_high = summary_block.get("long_term_highlights", "无")
             mt_high = summary_block.get("medium_term_highlights", "无")
-            st_high = summary_block.get("short_term_highlights", "无")
-            report_lines.append("概述:\n- 核心: " + core_high + "\n- 长期: " + lt_high + "\n- 中期: " + mt_high + "\n- 短期: " + st_high)
+            report_lines.append("概述:\n- 核心: " + core_high + "\n- 长期: " + lt_high + "\n- 中期: " + mt_high)
 
         # report_lines.append(f"记忆文件位置: {state.path}")
 
@@ -443,62 +436,6 @@ class SimpleMemoryPlugin(Star):
         bucket.clear()
         bucket.extend(index.values())
         return result
-
-    async def get_persona_system_prompt(self, session: str) -> str:
-        """获取人格系统提示词
-
-        Args:
-            session: 会话ID
-
-        Returns:
-            人格系统提示词
-        """
-        base_system_prompt = ""
-        try:
-            # 尝试获取当前会话的人格设置
-            uid = session  # session 就是 unified_msg_origin
-            curr_cid = await self.context.conversation_manager.get_curr_conversation_id(
-                uid
-            )
-
-            # 获取默认人格设置
-            default_persona_obj = self.context.provider_manager.selected_default_persona
-
-            if curr_cid:
-                conversation = await self.context.conversation_manager.get_conversation(
-                    uid, curr_cid
-                )
-
-                if (
-                    conversation
-                    and conversation.persona_id
-                    and conversation.persona_id != "[%None]"
-                ):
-                    # 有指定人格，尝试获取人格的系统提示词
-                    personas = self.context.provider_manager.personas
-                    if personas:
-                        for persona in personas:
-                            if (
-                                hasattr(persona, "name")
-                                and persona.name == conversation.persona_id
-                            ):
-                                base_system_prompt = getattr(persona, "prompt", "")
-                                
-                                break
-
-            # 如果没有获取到人格提示词，尝试使用默认人格
-            if (
-                not base_system_prompt
-                and default_persona_obj
-                and default_persona_obj.get("prompt")
-            ):
-                base_system_prompt = default_persona_obj["prompt"]
-                
-
-        except Exception as e:
-            logger.warning(f"获取人格系统提示词失败: {e}")
-
-        return base_system_prompt
 
     async def get_all_conversation(self, event: AstrMessageEvent) -> str:
         uid = event.unified_msg_origin
