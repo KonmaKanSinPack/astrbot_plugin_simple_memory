@@ -1,8 +1,8 @@
 # simple-memory
 
-一个帮助 AstrBot 将对话整理成「长期 / 短期记忆」的插件。插件会：
+一个帮助 AstrBot 将对话整理成「核心 / 长期 / 短期记忆」的插件。插件会：
 
-- 维护 `memory_store_{uid}.json`，保存结构化记忆与元信息。
+- 维护 `memory_store_{uid}.json`，保存结构化记忆与元信息。（注意，在windows系统下可能因为：的出现导致保存错误）
 - 输出提示词，指导大模型根据对话编写记忆增删改 JSON。
 - 接收模型 JSON，自动更新本地记忆并给出报告。
 
@@ -10,7 +10,7 @@
 1. 使用`/mem gen`自动根据最新对话内容生成并存储记忆；添加参数`/mem gen extra_prompt --full`;
 	`extra_prompt`: 临时添加的额外prompt
 	`--full`: 根据全部对话内容生成记忆
-2. 在 AstrBot 中启用插件后发送 `/memory help` 查看指令说明。
+2. 在 AstrBot 中启用插件后发送 `/mem help` 查看指令说明。
 3. 使用`/mem check`查看上次更新的内容（增删改）
 4. 新增配置文件，现在可以自己自定义记忆生成prompt了
 
@@ -23,10 +23,11 @@
 ```json
 {
 	"summary": {
+		"core_term_highlights": "<核心变化概述>",
 		"long_term_highlights": "<长期变化概述>",
-		"short_term_highlights": "<短期变化概述>"
+		"medium_term_highlights": "<短期变化概述>"
 	},
-	"long_term": {
+	"core_term": {
 		"upsert": [
 			{
 				"id": "可留空，由插件生成",
@@ -38,8 +39,8 @@
 		],
 		"delete": ["lt-123"]
 	},
+	"long_term: { 同上 }"
 	"medium_term: { 同上 }"
-	"short_term: { 同上 }"
 }
 ```
 
