@@ -7,7 +7,7 @@
 - 接收模型 JSON，自动更新本地记忆并给出报告。
 
 ## 使用方法
-1. 使用`/mem gen`自动根据最新对话内容生成并存储记忆；添加参数`/memory gen extra_prompt --full`;
+1. 使用`/mem gen`自动根据最新对话内容生成并存储记忆；添加参数`/mem gen extra_prompt --full`;
 	`extra_prompt`: 临时添加的额外prompt
 	`--full`: 根据全部对话内容生成记忆
 2. 在 AstrBot 中启用插件后发送 `/memory help` 查看指令说明。
