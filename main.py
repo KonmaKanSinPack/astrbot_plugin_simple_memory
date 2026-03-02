@@ -87,7 +87,7 @@ class SimpleMemoryPlugin(Star):
         memory_snapshot = json.dumps(state, ensure_ascii=False, indent=2)
 
         ori_system_prompt = req.system_prompt or ""
-        logger.info(f"原系统提示词_SimpleMemory:{ori_system_prompt}")
+        # logger.info(f"原系统提示词_SimpleMemory:{ori_system_prompt}")
 
         mem_prompt = (
             "\n\n[Memory Info]\n"
