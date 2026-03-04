@@ -28,12 +28,12 @@ def _default_state() -> Dict[str, Any]:
         "core_memory": [],
         "long_term": [],
         "medium_term": [],
-        "metadata": {
-            "version": 1,
-            "created_at": now,
-            "last_update": now,
-            "summary": {},
-        },
+        # "metadata": {
+        #     "version": 1,
+        #     "created_at": now,
+        #     "last_update": now,
+        #     "summary": {},
+        # },
     }
 
 
@@ -84,6 +84,8 @@ class SimpleMemoryPlugin(Star):
         uid = event.unified_msg_origin
         mem_file_path = get_astrbot_data_path() + f"memory_store_{uid}.json"
         state = MemoryStore(mem_file_path).load()
+        
+        
         memory_snapshot = json.dumps(state, ensure_ascii=False, indent=2)
 
         ori_system_prompt = req.system_prompt or ""
@@ -255,6 +257,7 @@ class SimpleMemoryPlugin(Star):
         else:
             task_prompt = "please refresh core/long-term/medium-term memory based on the latest conversation.\n"
         state = MemoryStore(mem_file_path).load()
+        state.pop("metadata", None)
         logger.info("创建记忆提示词，操作者: %s", uid)
         
         memory_snapshot = json.dumps(state, ensure_ascii=False, indent=2)
@@ -366,10 +369,10 @@ class SimpleMemoryPlugin(Star):
         )
 
         summary_block = operations.get("summary")
-        if isinstance(summary_block, dict):
-            state.setdefault("metadata", {}).setdefault("summary", {}).update(summary_block)
+        # if isinstance(summary_block, dict):
+        #     state.setdefault("metadata", {}).setdefault("summary", {}).update(summary_block)
 
-        state.setdefault("metadata", {})["last_update"] = now
+        # state.setdefault("metadata", {})["last_update"] = now
 
         report_lines.append(self._format_report_line("核心记忆", core_result))
         report_lines.append(self._format_report_line("长期", lt_result))
