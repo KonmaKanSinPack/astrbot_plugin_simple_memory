@@ -84,7 +84,7 @@ class SimpleMemoryPlugin(Star):
         uid = event.unified_msg_origin
         mem_file_path = get_astrbot_data_path() + f"memory_store_{uid}.json"
         state = MemoryStore(mem_file_path).load()
-        
+        state.pop("metadata", None)
         
         memory_snapshot = json.dumps(state, ensure_ascii=False, indent=2)
 
