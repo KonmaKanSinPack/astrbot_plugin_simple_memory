@@ -373,7 +373,7 @@ class SimpleMemoryPlugin(Star):
         #     state.setdefault("metadata", {}).setdefault("summary", {}).update(summary_block)
 
         # state.setdefault("metadata", {})["last_update"] = now
-
+        state.pop("metadata", None)
         report_lines.append(self._format_report_line("核心记忆", core_result))
         report_lines.append(self._format_report_line("长期", lt_result))
         report_lines.append(self._format_report_line("中期", mt_result))
