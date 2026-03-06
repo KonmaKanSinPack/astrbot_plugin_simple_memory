@@ -201,29 +201,41 @@ class SimpleMemoryPlugin(Star):
             "importance": importance,
             "expires_at": expires_at,
         }
+        logger.info("update_one_memory called with: %s", cur_state)
+
+        if memory_type not in {"core_memory", "long_term", "medium_term"}:
+            return "无效的记忆类型，仅支持 core_memory、long_term 或 medium_term。"
         if action_type not in {"upsert", "delete"}:
             return "无效的操作类型，仅支持 upsert 或 delete。"
-        elif action_type == "upsert" and not content:
+        if not id:
+            return "必须提供 id。"
+        if action_type == "upsert" and not content:
             return "upsert 操作必须提供 content。"
         
         if action_type == "upsert":
-            mem_to_update =  f"  \"{memory_type}\": "
-            "{\n"
-            "    \"upsert\": [{\n"
-            f"      \"id\": \"{id}\",\n"
-            f"      \"content\": \"{content}\",\n"
-            f"      \"category\": \"{category}\",\n"
-            f"      \"importance\": {importance},\n"
-            f"      \"expires_at\": \"{expires_at}\"\n"
-            "    }],\n"
-            "}\n\n"
+            operations = {
+                memory_type: {
+                    "upsert": [
+                        {
+                            "id": id,
+                            "content": content,
+                            "category": category or "fact",
+                            "importance": importance if importance is not None else 3,
+                            "expires_at": expires_at or "",
+                        }
+                    ],
+                    "delete": [],
+                }
+            }
         else:
-            mem_to_update = f"  \"{memory_type}\": " 
-            "{\n"
-            "    \"delete\": [\n"
-            f"      \"{id}\"\n"
-            "    ]\n"
-            "}\n\n"
+            operations = {
+                memory_type: {
+                    "upsert": [],
+                    "delete": [id],
+                }
+            }
+
+        mem_to_update = json.dumps(operations, ensure_ascii=False)
         report = self._handle_apply(event, mem_to_update)
         logger.info("State update report: %s", report)
         if report.startswith("Update Failed"):
@@ -419,6 +431,17 @@ class SimpleMemoryPlugin(Star):
             return None
         if stripped[0] in "[{" and stripped[-1] in "]}":
             return stripped
+
+        # Try to recover the first valid JSON object/array from mixed text output.
+        decoder = json.JSONDecoder()
+        for i, ch in enumerate(stripped):
+            if ch not in "[{":
+                continue
+            try:
+                _, end = decoder.raw_decode(stripped[i:])
+                return stripped[i : i + end]
+            except Exception:
+                continue
         return None
 
     def _apply_operations(self, state: Dict[str, Any], operations: Dict[str, Any]) -> str:
