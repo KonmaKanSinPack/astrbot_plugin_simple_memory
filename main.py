@@ -177,20 +177,9 @@ class SimpleMemoryPlugin(Star):
                                 ) -> MessageEventResult:
 
         '''增加/更新/删除自己的一条记忆。
-        大模型可以调用这个工具来修改记忆，调用时请确保提供正确的参数。你当前的记忆格式示例，用于帮助你理解该工具参数：
-         "  \"core_memory\": {\n"
-            "    \"upsert\": [{\n"
-            "      \"id\": \"reuse or system generated\",\n"
-            "      \"content\": \"memory text\",\n"
-            "      \"category\": \"profile|preference|task|fact\",\n"
-            "      \"importance\": 1-5,\n"
-            "      \"expires_at\": \"YYYY-MM-DD or leave blank\"\n"
-            "    }],\n"
-            "    \"delete\": [\"id to delete\"]\n"
-            "  },\n"
-            "  \"long_term\": { same structure as core_memory },\n"
-            "  \"medium_term\": { same structure as core_memory },\n"
-            "}\n\n"
+        大模型可以调用这个工具来修改记忆，调用时请按顺序确保提供正确的参数。
+        
+         
 
         Args:
             memory_type (str): 记忆类型(core_memory|long_term|medium_term)。
