@@ -1,10 +1,11 @@
 import json
 from astrbot.api.provider import ProviderRequest
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, time, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 from astrbot.api.event import MessageChain
+from astrbot.api.event import filter, AstrMessageEvent, MessageEventResult
 from astrbot.api import logger
 from astrbot.api.event import AstrMessageEvent, filter
 from astrbot.api.star import Context, Star, register
@@ -16,6 +17,7 @@ from astrbot.core.agent.message import (
     TextPart,
 )
 from astrbot.api import AstrBotConfig
+
 import os
 from astrbot.core.utils.astrbot_path import get_astrbot_data_path
 def _utc_now() -> str:
@@ -163,7 +165,84 @@ class SimpleMemoryPlugin(Star):
         await self.gen(event, extra_prompt=f"这是你之前的记忆，根据这些记忆重构现在的记忆:{state_pre}")
         event.stop_event()
 
+    @filter.llm_tool(name="apply_state_transition") 
+    async def apply_state_transition(self, event: AstrMessageEvent, 
+                                memory_type: Optional[str] = None,
+                                action_type: Optional[str] = None,
+                                id: Optional[str] = None,
+                                content: Optional[str] = None,
+                                category: Optional[str] = None,
+                                importance: Optional[int] = None,
+                                expires_at: Optional[str] = None,
+                                ) -> MessageEventResult:
+
+        '''增加/更新/删除自己的一条记忆。
+        大模型可以调用这个工具来修改记忆，调用时请确保提供正确的参数。你当前的记忆格式示例，用于帮助你理解该工具参数：
+         "  \"core_memory\": {\n"
+            "    \"upsert\": [{\n"
+            "      \"id\": \"reuse or system generated\",\n"
+            "      \"content\": \"memory text\",\n"
+            "      \"category\": \"profile|preference|task|fact\",\n"
+            "      \"importance\": 1-5,\n"
+            "      \"expires_at\": \"YYYY-MM-DD or leave blank\"\n"
+            "    }],\n"
+            "    \"delete\": [\"id to delete\"]\n"
+            "  },\n"
+            "  \"long_term\": { same structure as core_memory },\n"
+            "  \"medium_term\": { same structure as core_memory },\n"
+            "}\n\n"
+
+        Args:
+            memory_type (str): 记忆类型(core_memory|long_term|medium_term)。
+            action_type (str): 操作类型(upsert|delete)。
+            id (str): 记忆 ID。
+            content (str, optional): 记忆内容。
+            category (str, optional): 记忆类别(profile|preference|task|fact)。
+            importance (int, optional): 记忆重要性，范围 1-5。
+            expires_at (str, optional): 记忆过期时间，格式为 YYYY-MM-DD。
+        '''
         
+
+        cur_state = {
+            "memory_type": memory_type,
+            "action_type": action_type,
+            "id": id,
+            "content": content,
+            "category": category,
+            "importance": importance,
+            "expires_at": expires_at,
+        }
+        if action_type not in {"upsert", "delete"}:
+            return MessageEventResult(success=False, message="无效的操作类型，仅支持 upsert 或 delete。")
+        elif action_type == "upsert" and not content:
+            return MessageEventResult(success=False, message="upsert 操作必须提供 content。")
+        
+        if action_type == "upsert":
+            mem_to_update =  f"  \"{memory_type}\": "
+            "{\n"
+            "    \"upsert\": [{\n"
+            f"      \"id\": \"{id}\",\n"
+            f"      \"content\": \"{content}\",\n"
+            f"      \"category\": \"{category}\",\n"
+            f"      \"importance\": {importance},\n"
+            f"      \"expires_at\": \"{expires_at}\"\n"
+            "    }],\n"
+            "}\n\n"
+        else:
+            mem_to_update = f"  \"{memory_type}\": " 
+            "{\n"
+            "    \"delete\": [\n"
+            f"      \"{id}\"\n"
+            "    ]\n"
+            "}\n\n"
+        report = self._handle_apply(event, mem_to_update)
+        logger.info("State update report: %s", report)
+        if report.startswith("Update Failed"):
+            # await event.send(event.plain_result(report))
+            return report
+        else:
+            # await event.send(event.plain_result("Update successful: " + report))
+            return report
 
     @mem.command("apply")
     async def apply(self, event: AstrMessageEvent):
