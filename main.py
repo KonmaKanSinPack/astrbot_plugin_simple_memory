@@ -165,8 +165,8 @@ class SimpleMemoryPlugin(Star):
         await self.gen(event, extra_prompt=f"这是你之前的记忆，根据这些记忆重构现在的记忆:{state_pre}")
         event.stop_event()
 
-    @filter.llm_tool(name="apply_state_transition") 
-    async def apply_state_transition(self, event: AstrMessageEvent, 
+    @filter.llm_tool(name="update_one_memory") 
+    async def update_one_memory(self, event: AstrMessageEvent, 
                                 memory_type: Optional[str] = None,
                                 action_type: Optional[str] = None,
                                 id: Optional[str] = None,
