@@ -213,9 +213,9 @@ class SimpleMemoryPlugin(Star):
             "expires_at": expires_at,
         }
         if action_type not in {"upsert", "delete"}:
-            return MessageEventResult(success=False, message="无效的操作类型，仅支持 upsert 或 delete。")
+            return "无效的操作类型，仅支持 upsert 或 delete。"
         elif action_type == "upsert" and not content:
-            return MessageEventResult(success=False, message="upsert 操作必须提供 content。")
+            return "upsert 操作必须提供 content。"
         
         if action_type == "upsert":
             mem_to_update =  f"  \"{memory_type}\": "
