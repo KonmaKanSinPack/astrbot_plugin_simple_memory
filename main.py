@@ -170,12 +170,12 @@ class SimpleMemoryPlugin(Star):
     async def update_one_memory(self, event: AstrMessageEvent, 
                                 memory_type: Optional[str] = None,
                                 action_type: Optional[str] = None,
-                                id: Optional[str] = None,
+                                memory_id: Optional[str] = None,
                                 content: Optional[str] = None,
                                 category: Optional[str] = None,
                                 importance: Optional[int] = None,
                                 expires_at: Optional[str] = None,
-                                target_id: Optional[str] = None
+                                subject_id: Optional[str] = None
                                 ) -> MessageEventResult:
 
         '''增加/更新/删除自己的一条记忆。
@@ -187,19 +187,19 @@ class SimpleMemoryPlugin(Star):
         Args:
             memory_type (str): 记忆类型(core_memory|long_term|medium_term)。
             action_type (str): 操作类型(upsert|delete)。
-            id (str): 记忆 ID。
+            memory_id (str): 记忆 ID。
             content (str, optional): 记忆内容。
             category (str, optional): 记忆类别(profile|preference|task|fact)。
             importance (int, optional): 记忆重要性，范围 1-5。
             expires_at (str, optional): 记忆过期时间，格式为 YYYY-MM-DD。
-            target_id (str, optional): 该记忆关联的对象/群组 ID（target_id），如为全局记忆，为 "global"
+            subject_id (str, optional): 该记忆关联的对象/群组 ID（subject_id），如为全局记忆，为 "global"
         '''
         
 
         cur_state = {
             "memory_type": memory_type,
             "action_type": action_type,
-            "id": id,
+            "memory_id": memory_id,
             "content": content,
             "category": category,
             "importance": importance,
@@ -211,8 +211,8 @@ class SimpleMemoryPlugin(Star):
             return "无效的记忆类型，仅支持 core_memory、long_term 或 medium_term。"
         if action_type not in {"upsert", "delete"}:
             return "无效的操作类型，仅支持 upsert 或 delete。"
-        if not id:
-            return "必须提供 id。"
+        if not memory_id:
+            return "必须提供 memory_id"
         if action_type == "upsert" and not content:
             return "upsert 操作必须提供 content。"
         
@@ -221,12 +221,12 @@ class SimpleMemoryPlugin(Star):
                 memory_type: {
                     "upsert": [
                         {
-                            "id": id,
+                            "memory_id": memory_id,
                             "content": content,
                             "category": category or "fact",
                             "importance": importance if importance is not None else 3,
                             "expires_at": expires_at or "",
-                            "target_id": target_id or "global",
+                            "subject_id": subject_id or "global",
                         }
                     ],
                     "delete": [],
@@ -236,7 +236,7 @@ class SimpleMemoryPlugin(Star):
             operations = {
                 memory_type: {
                     "upsert": [],
-                    "delete": [id],
+                    "delete": [memory_id],
                 }
             }
 
@@ -290,7 +290,7 @@ class SimpleMemoryPlugin(Star):
 
     async def send_prompt(self, event, extra_prompt="", full=False):
         uid = event.unified_msg_origin
-        provider_id = await self.context.get_current_chat_provider_id(uid)
+        # provider_id = await self.context.get_current_chat_provider_id(uid)
         # logger.info(f"uid:{uid}")
 
         #获取会话历史
@@ -358,7 +358,7 @@ class SimpleMemoryPlugin(Star):
             "7. short-term memory is not needed to generate. Make sure all memory you generate is either core, long-term, or medium-term.\n"
             "\n**[Current Memory Snapshot]**\n"
             f"{memory_snapshot}"
-            "\n**[Current target_id]，use it if this memory is associated with a specific user or group**\n"
+            "\n**[Current subject_id]，use it if this memory is associated with a specific user or group**\n"
             f"{uid}\n"
         )
         
@@ -380,14 +380,14 @@ class SimpleMemoryPlugin(Star):
             "  },\n"
             "  \"core_memory\": {\n"
             "    \"upsert\": [{\n"
-            "      \"id\": \"reuse or system generated\",\n"
+            "      \"memory_id\": \"reuse or system generated\",\n"
             "      \"content\": \"memory text\",\n"
             "      \"category\": \"profile|preference|task|fact\",\n"
             "      \"importance\": 1-5,\n"
             "      \"expires_at\": \"YYYY-MM-DD or leave blank\"\n"
-            "      \"target_id\": \"(who/which group this memory is associated with; use 'global' means global)\"\n"
+            "      \"subject_id\": \"(who/which group this memory is associated with; use 'global' means global memory)\"\n"
             "    }],\n"
-            "    \"delete\": [\"id to delete\"]\n"
+            "    \"delete\": [\"memory_id to delete\"]\n"
             "  },\n"
             "  \"long_term\": { same structure as core_memory },\n"
             "  \"medium_term\": { same structure as core_memory },\n"
@@ -495,7 +495,7 @@ class SimpleMemoryPlugin(Star):
         timestamp: str,
     ) -> UpsertResult:
         result = UpsertResult()
-        index = {item.get("id"): item for item in bucket if item.get("id")}
+        index = {item.get("memory_id"): item for item in bucket if item.get("memory_id")}
 
         upserts = operations.get("upsert") or []
         if not isinstance(upserts, list):
@@ -505,20 +505,20 @@ class SimpleMemoryPlugin(Star):
             if not isinstance(raw_entry, dict):
                 continue
             content = (raw_entry.get("content") or "").strip()
-            target_id = (raw_entry.get("target_id") or "global").strip()
+            subject_id = (raw_entry.get("subject_id") or "global").strip()
             if not content:
                 continue
             
             #创建副本，用于之后更新
             entry = raw_entry.copy()
             entry["content"] = content
-            entry["target_id"] = target_id
+            entry["subject_id"] = subject_id
             entry["updated_at"] = timestamp
             entry.setdefault("category", "fact" if is_long_term else "task")
             entry.setdefault("importance", 3)
 
-            entry_id = entry.get("id") or self._generate_entry_id(is_long_term)
-            entry["id"] = entry_id
+            entry_id = entry.get("memory_id") or self._generate_entry_id(is_long_term)
+            entry["memory_id"] = entry_id
 
             if entry_id in index:#如果已经存在，更新内容并保留原有的 created_at
                 entry.setdefault("created_at", index[entry_id].get("created_at", timestamp))
