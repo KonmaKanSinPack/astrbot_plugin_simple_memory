@@ -180,8 +180,8 @@ class SimpleMemoryPlugin(Star):
 
         '''增加/更新/删除自己的一条记忆。
         大模型可以调用这个工具来修改记忆，调用时请按顺序确保提供正确的参数。
-        当大模型需要增加或更新记忆时，必须提供 memory_type=core_memory|long_term|medium_term、action_type=upsert、id（可以是空字符串或null，系统会自动生成唯一 ID）、content（记忆内容）等参数，category、importance、expires_at、target_id 可选。
-        当大模型需要删除记忆时，必须提供 memory_type、action_type=delete、id 参数，其他参数不提供。
+        当大模型需要增加或更新记忆时，必须提供 memory_type=core_memory|long_term|medium_term、action_type=upsert、memory_id（可以是空字符串或null，系统会自动生成唯一 ID）、content（记忆内容）等参数，category、importance、expires_at、subject_id 可选。
+        当大模型需要删除记忆时，必须提供 memory_type、action_type=delete、memory_id 参数，其他参数不提供。
          
 
         Args:
