@@ -191,6 +191,7 @@ class SimpleMemoryPlugin(Star):
             category (str, optional): 记忆类别(profile|preference|task|fact)。
             importance (int, optional): 记忆重要性，范围 1-5。
             expires_at (str, optional): 记忆过期时间，格式为 YYYY-MM-DD。
+            target_id (str, optional): 关联的对象/群组 ID（target_id），默认为 "global"。
         '''
         
 
@@ -383,7 +384,7 @@ class SimpleMemoryPlugin(Star):
             "      \"category\": \"profile|preference|task|fact\",\n"
             "      \"importance\": 1-5,\n"
             "      \"expires_at\": \"YYYY-MM-DD or leave blank\"\n"
-            "      \"target_id\": \"(who this state is associated with; use 'global' means global)\"\n"
+            "      \"target_id\": \"(who/which group this state is associated with; use 'global' means global)\"\n"
             "    }],\n"
             "    \"delete\": [\"id to delete\"]\n"
             "  },\n"
