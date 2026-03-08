@@ -356,6 +356,8 @@ class SimpleMemoryPlugin(Star):
             "7. short-term memory is not needed to generate. Make sure all memory you generate is either core, long-term, or medium-term.\n"
             "\n**[Current Memory Snapshot]**\n"
             f"{memory_snapshot}"
+            "\n**[Current UID]**\n"
+            f"{uid}"
         )
         
         template = (
