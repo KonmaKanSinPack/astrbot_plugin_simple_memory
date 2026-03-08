@@ -191,7 +191,7 @@ class SimpleMemoryPlugin(Star):
             category (str, optional): 记忆类别(profile|preference|task|fact)。
             importance (int, optional): 记忆重要性，范围 1-5。
             expires_at (str, optional): 记忆过期时间，格式为 YYYY-MM-DD。
-            target_id (str, optional): 关联的对象/群组 ID（target_id），默认为 "global"。
+            target_id (str, optional): 该记忆关联的对象/群组 ID（target_id），如为全局记忆，为 "global"
         '''
         
 
@@ -357,7 +357,7 @@ class SimpleMemoryPlugin(Star):
             "7. short-term memory is not needed to generate. Make sure all memory you generate is either core, long-term, or medium-term.\n"
             "\n**[Current Memory Snapshot]**\n"
             f"{memory_snapshot}"
-            "\n**[Current target_id]**\n"
+            "\n**[Current target_id]，use it if this memory is associated with a specific user or group**\n"
             f"{uid}"
         )
         
@@ -384,7 +384,7 @@ class SimpleMemoryPlugin(Star):
             "      \"category\": \"profile|preference|task|fact\",\n"
             "      \"importance\": 1-5,\n"
             "      \"expires_at\": \"YYYY-MM-DD or leave blank\"\n"
-            "      \"target_id\": \"(who/which group this state is associated with; use 'global' means global)\"\n"
+            "      \"target_id\": \"(who/which group this memory is associated with; use 'global' means global)\"\n"
             "    }],\n"
             "    \"delete\": [\"id to delete\"]\n"
             "  },\n"
