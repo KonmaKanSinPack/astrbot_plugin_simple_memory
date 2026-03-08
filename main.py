@@ -180,7 +180,8 @@ class SimpleMemoryPlugin(Star):
 
         '''增加/更新/删除自己的一条记忆。
         大模型可以调用这个工具来修改记忆，调用时请按顺序确保提供正确的参数。
-        
+        当大模型需要增加或更新记忆时，必须提供 memory_type=core_memory|long_term|medium_term、action_type=upsert、id（可以是空字符串或null，系统会自动生成唯一 ID）、content（记忆内容）等参数，category、importance、expires_at、target_id 可选。
+        当大模型需要删除记忆时，必须提供 memory_type、action_type=delete、id 参数，其他参数不提供。
          
 
         Args:
@@ -504,11 +505,14 @@ class SimpleMemoryPlugin(Star):
             if not isinstance(raw_entry, dict):
                 continue
             content = (raw_entry.get("content") or "").strip()
+            target_id = (raw_entry.get("target_id") or "global").strip()
             if not content:
                 continue
-
+            
+            #创建副本，用于之后更新
             entry = raw_entry.copy()
             entry["content"] = content
+            entry["target_id"] = target_id
             entry["updated_at"] = timestamp
             entry.setdefault("category", "fact" if is_long_term else "task")
             entry.setdefault("importance", 3)
@@ -516,7 +520,7 @@ class SimpleMemoryPlugin(Star):
             entry_id = entry.get("id") or self._generate_entry_id(is_long_term)
             entry["id"] = entry_id
 
-            if entry_id in index:
+            if entry_id in index:#如果已经存在，更新内容并保留原有的 created_at
                 entry.setdefault("created_at", index[entry_id].get("created_at", timestamp))
                 index[entry_id].update(entry)
                 result.updated += 1
