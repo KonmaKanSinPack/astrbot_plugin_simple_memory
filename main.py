@@ -149,8 +149,8 @@ class SimpleMemoryPlugin(Star):
         适用于需要重构记忆的场景
         '''
         uid = event.unified_msg_origin
-        mem_path = get_astrbot_data_path() + f"memory_store_{uid}.json"
-        pre_mem_path = get_astrbot_data_path() + f"memory_store_{uid}_pre.json"
+        mem_path = get_astrbot_data_path() + f"memory_store_{uid}.json" if not self.use_global else get_astrbot_data_path() + f"memory_store_global.json"  
+        pre_mem_path = get_astrbot_data_path() + f"memory_store_{uid}_pre.json" if not self.use_global else get_astrbot_data_path() + f"memory_store_global_pre.json"  
         if os.path.exists(pre_mem_path):
             state_pre = MemoryStore(pre_mem_path).load()
         else:
