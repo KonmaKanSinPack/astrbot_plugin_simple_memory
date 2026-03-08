@@ -359,7 +359,7 @@ class SimpleMemoryPlugin(Star):
             "\n**[Current Memory Snapshot]**\n"
             f"{memory_snapshot}"
             "\n**[Current target_id]，use it if this memory is associated with a specific user or group**\n"
-            f"{uid}"
+            f"{uid}\n"
         )
         
         template = (
