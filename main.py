@@ -75,6 +75,7 @@ class SimpleMemoryPlugin(Star):
         super().__init__(context)
         self.context = context
         self.config = config
+        self.use_global = self.config.get("use_global", True)
         self.last_update: Dict[str, str] = {}
     # async def initialize(self):
     #     """插件初始化时确保记忆文件存在。"""
@@ -84,7 +85,7 @@ class SimpleMemoryPlugin(Star):
     async def add_mem_prompt(self, event: AstrMessageEvent, req: ProviderRequest, *_, **__):
         """在发送给大模型的请求中添加记忆提示词。"""
         uid = event.unified_msg_origin
-        mem_file_path = get_astrbot_data_path() + f"memory_store_{uid}.json"
+        mem_file_path = get_astrbot_data_path() + f"memory_store_{uid}.json" if not self.use_global else get_astrbot_data_path() + f"memory_store_global.json"  
         state = MemoryStore(mem_file_path).load()
         state.pop("metadata", None)
         
@@ -174,6 +175,7 @@ class SimpleMemoryPlugin(Star):
                                 category: Optional[str] = None,
                                 importance: Optional[int] = None,
                                 expires_at: Optional[str] = None,
+                                target_id: Optional[str] = None
                                 ) -> MessageEventResult:
 
         '''增加/更新/删除自己的一条记忆。
@@ -222,6 +224,7 @@ class SimpleMemoryPlugin(Star):
                             "category": category or "fact",
                             "importance": importance if importance is not None else 3,
                             "expires_at": expires_at or "",
+                            "target_id": target_id or "global",
                         }
                     ],
                     "delete": [],
@@ -331,7 +334,7 @@ class SimpleMemoryPlugin(Star):
         #     return "请在 prompt 子命令后附带对话文本，例如 /memory prompt 最近的对话内容。"
 
         uid = event.unified_msg_origin
-        mem_file_path = get_astrbot_data_path() + f"memory_store_{uid}.json"
+        mem_file_path = get_astrbot_data_path() + f"memory_store_{uid}.json" if not self.use_global else get_astrbot_data_path() + f"memory_store_global.json"  
         if not Path(mem_file_path).exists() or full:
             task_prompt = "please refresh core/long-term/medium-term memory based on the entire conversation.\n"
         else:
@@ -358,7 +361,7 @@ class SimpleMemoryPlugin(Star):
         template = (
             task_prompt +
             cur_mem_prompt + 
-            self.config.mem_prompt+
+            self.config.get("mem_prompt", "") +
             "output JSON with the following sections (each is required and serves a distinct purpose):\n"
             "- summary: concise highlights of any changes across memories.\n"
             "- core_memory: enduring identity/profile/preferences/facts; anchor for consistency and rarely changes.\n"
@@ -378,6 +381,7 @@ class SimpleMemoryPlugin(Star):
             "      \"category\": \"profile|preference|task|fact\",\n"
             "      \"importance\": 1-5,\n"
             "      \"expires_at\": \"YYYY-MM-DD or leave blank\"\n"
+            "      \"target_id\": \"(who this state is associated with; use 'global' means global)\"\n"
             "    }],\n"
             "    \"delete\": [\"id to delete\"]\n"
             "  },\n"
@@ -410,7 +414,7 @@ class SimpleMemoryPlugin(Star):
                 return f"JSON parsing failed: {exc}"
 
         uid = event.unified_msg_origin
-        mem_file_path = get_astrbot_data_path() + f"memory_store_{uid}.json"
+        mem_file_path = get_astrbot_data_path() + f"memory_store_{uid}.json" if not self.use_global else get_astrbot_data_path() + f"memory_store_global.json"  
         store = MemoryStore(mem_file_path)
         state = store.load()
 

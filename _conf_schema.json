@@ -1,4 +1,9 @@
 {
+    "use_global":{
+        "description": "是否启用全局记忆",
+        "type": "bool",
+        "default": true
+    },
     "mem_prompt": {
         "description": "记忆刷新任务提示词",
         "type": "text",
