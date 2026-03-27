@@ -208,9 +208,9 @@ class SimpleMemoryPlugin(Star):
         logger.info("update_one_memory called with: %s", cur_state)
 
         if memory_type not in {"core_memory", "long_term", "medium_term"}:
-            return "无效的记忆类型，仅支持 core_memory、long_term 或 medium_term。"
+            return "无效的记忆类型，memory_type仅支持 core_memory、long_term 或 medium_term。"
         if action_type not in {"upsert", "delete"}:
-            return "无效的操作类型，仅支持 upsert 或 delete。"
+            return "无效的操作类型，action_type仅支持 upsert 或 delete。"
         if not memory_id:
             return "必须提供 memory_id"
         if action_type == "upsert" and not content:
