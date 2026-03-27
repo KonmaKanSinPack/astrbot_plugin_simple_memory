@@ -118,10 +118,15 @@ class SimpleMemoryPlugin(Star):
         final_mem_info = []
         for mem_type in ["core_memory", "long_term", "medium_term"]:
             filtered_entries = []
+            if mem_type not in mem_snapshot:
+                continue
             mem_entries = mem_snapshot.get(mem_type, [])
+            id_mem = {id_: [] for id_ in id_list}
             for entry in mem_entries:
                 if entry.get("subject_id") in id_list:
-                    filtered_entries.append(f"- {entry.get('content')}, importance: {entry.get('importance')})")
+                    id_mem[entry.get("subject_id")].append(f"- {entry.get('content')}, importance: {entry.get('importance')})\n")
+            
+            filtered_entries.append(f"  [subject_id: {id_}]" + "\n".join(entries) for id_, entries in id_mem.items() if entries)
             final_mem_info.append(f"{mem_type}:\n" + "\n".join(filtered_entries) + "\n")
 
 
@@ -230,6 +235,31 @@ class SimpleMemoryPlugin(Star):
         # state = pre_mem.load()
         await self.gen(event, extra_prompt=f"这是你之前的记忆，根据这些记忆重构现在的记忆:{state_pre}")
         event.stop_event()
+    
+    @filter.llm_tool(name="search_memory_by_name") 
+    async def search_memory_by_name(self, event: AstrMessageEvent, 
+                                name: str = None
+                                ) -> MessageEventResult:
+
+        '''根据name搜索记忆并返回结果。
+        大模型可以调用这个工具来搜索记忆，调用时请确保提供正确的参数
+        
+        当大模型需要检索与name相关记忆时，必须提供name
+
+        Args:
+            name (str): 记忆名称。
+        '''
+        if name is None:
+            return "必须提供 name 参数。"
+
+        subject_id = self.user_roster.id_dict.get(name)
+        if subject_id is None:
+            return f"未找到与 name '{name}' 相关的 subject_id。"
+        else:
+            mem_file_path = get_astrbot_data_path() + f"memory_store_{event.unified_msg_origin}.json" if not self.use_global else get_astrbot_data_path() + f"memory_store_global.json"  
+            state = MemoryStore(mem_file_path).load()
+            mem_info = self.process_mem_info(state, id_list=[subject_id])
+            return mem_info
 
     @filter.llm_tool(name="update_one_memory") 
     async def update_one_memory(self, event: AstrMessageEvent, 
