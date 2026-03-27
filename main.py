@@ -126,9 +126,9 @@ class SimpleMemoryPlugin(Star):
                 if entry.get("subject_id") in id_list:
                     id_mem[entry.get("subject_id")].append(f"- {entry.get('content')}, importance: {entry.get('importance')})")
             
-            filtered_entries.append(f"[subject_id: {id_}]" + "\n".join(entries) for id_, entries in id_mem.items() if entries)
+            filtered_entries.extend(f"[subject_id: {id_}]" + "\n".join(entries) for id_, entries in id_mem.items() if entries)
             logger.info(f"查看杀杀杀：{filtered_entries}")
-            final_mem_info.append(f"{mem_type}:\n" + "\n".join("\n".join(filtered_entries)) + "\n")
+            final_mem_info.append(f"{mem_type}:\n" + "\n".join(filtered_entries) + "\n")
 
         if not final_mem_info:
             return "No relevant memories found."
