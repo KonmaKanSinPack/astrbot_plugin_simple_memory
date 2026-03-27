@@ -156,7 +156,7 @@ class SimpleMemoryPlugin(Star):
         # state.pop("core_memory", None)
         # memory_snapshot = json.dumps(state, ensure_ascii=False, indent=2)
 
-        core_mem = self.process_mem_info(core_mem, id_list=id_list)
+        # core_mem = self.process_mem_info(core_mem, id_list=id_list)
         memory_snapshot = self.process_mem_info(state, id_list=id_list)
         ori_system_prompt = req.system_prompt or ""
         # logger.info(f"原系统提示词_SimpleMemory:{ori_system_prompt}")
