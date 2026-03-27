@@ -126,8 +126,7 @@ class SimpleMemoryPlugin(Star):
                 if entry.get("subject_id") in id_list:
                     id_mem[entry.get("subject_id")].append(f"- {entry.get('content')}, importance: {entry.get('importance')})")
             
-            filtered_entries.extend(f"[subject_id: {id_}]" + "\n".join(entries) for id_, entries in id_mem.items() if entries)
-            logger.info(f"查看杀杀杀：{filtered_entries}")
+            filtered_entries.extend(f"<subject_id: {id_}>" + "\n".join(entries) + "</subject_id>" for id_, entries in id_mem.items() if entries)
             final_mem_info.append(f"{mem_type}:\n" + "\n".join(filtered_entries) + "\n")
 
         if not final_mem_info:
@@ -243,7 +242,7 @@ class SimpleMemoryPlugin(Star):
 
         '''根据name搜索记忆并返回结果。
         大模型可以调用这个工具来搜索记忆，调用时请确保提供正确的参数
-        
+        当提到某个name时，大模型可以使用这个工具来检索与该name相关的记忆。
         当大模型需要检索与name相关记忆时，必须提供name
 
         Args:
