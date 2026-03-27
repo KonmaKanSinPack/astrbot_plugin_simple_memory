@@ -62,6 +62,36 @@ class MemoryStore:
             json.dumps(state, ensure_ascii=False, indent=2), encoding="utf-8"
         )
 
+class UserRoster:
+    def __init__(self: str):
+        path = get_astrbot_data_path() + f"user_roster.json"
+        self.path = Path(path)
+        self.id_dict = self.load()
+
+    def load(self) -> Dict[str, Any]:
+        if not self.path.exists():
+            state = {}
+            self.save(state)
+            return state
+        try:
+            return json.loads(self.path.read_text(encoding="utf-8"))
+        except Exception as exc:  # pragma: no cover - 防止文件损坏导致崩溃
+            logger.error("读取UserRoster文件失败，将使用默认结构: %s", exc)
+            state = {}
+            self.save(state)
+            return state
+    
+    def save(self, state: Dict[str, Any]) -> None:
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        self.path.write_text(
+            json.dumps(state, ensure_ascii=False, indent=2), encoding="utf-8"
+        )
+
+    def update(self, k, v):
+        self.id_dict[k] = v
+        self.save(self.id_dict)
+        logger.info(f"当前字典：{self.id_dict}")
+
 @dataclass
 class UpsertResult:
     added: int = 0
@@ -77,21 +107,53 @@ class SimpleMemoryPlugin(Star):
         self.config = config
         self.use_global = self.config.get("use_global", True)
         self.last_update: Dict[str, str] = {}
+        self.user_roster = UserRoster()
     # async def initialize(self):
     #     """插件初始化时确保记忆文件存在。"""
     #     _ = self.store.load()
+
+    def process_mem_info(self, mem_snapshot: Dict[str, Any], id_list=["global"]) -> str:
+        """将记忆快照转换为字符串格式，供提示词使用。"""
+        
+        final_mem_info = []
+        for mem_type in ["core_memory", "long_term", "medium_term"]:
+            filtered_entries = []
+            mem_entries = mem_snapshot.get(mem_type, [])
+            for entry in mem_entries:
+                if entry.get("subject_id") in id_list:
+                    filtered_entries.append(f"- {entry.get('content')}, importance: {entry.get('importance')})")
+            final_mem_info.append(f"{mem_type}:\n" + "\n".join(filtered_entries) + "\n")
+
+
+        if not final_mem_info:
+            return "No relevant memories found."
+        else:
+            return "<Relevant memories>\n" + "\n".join(final_mem_info) + "\n</Relevant memories>"
+    
 
     @filter.on_llm_request()
     async def add_mem_prompt(self, event: AstrMessageEvent, req: ProviderRequest, *_, **__):
         """在发送给大模型的请求中添加记忆提示词。"""
         uid = event.unified_msg_origin
+        subject_id = uid.split(":")[-1]
+        msg_type = uid.split(":")[-2]
+        sender_name = event.get_sender_name()
+        if msg_type == "GroupMessage":
+            id_list = ["global", subject_id, self.user_roster.id_dict.get(sender_name, "")]
+        else:
+            id_list = ["global", subject_id]  
+            if sender_name not in self.user_roster.id_dict and msg_type != "GroupMessage":
+                self.user_roster.update(sender_name, subject_id)
+
         mem_file_path = get_astrbot_data_path() + f"memory_store_{uid}.json" if not self.use_global else get_astrbot_data_path() + f"memory_store_global.json"  
         state = MemoryStore(mem_file_path).load()
         state.pop("metadata", None)
-        core_mem = state.get("core_memory", [])
+        core_mem = {"core_memory": state.get("core_memory", [])}
         state.pop("core_memory", None)
-        memory_snapshot = json.dumps(state, ensure_ascii=False, indent=2)
+        # memory_snapshot = json.dumps(state, ensure_ascii=False, indent=2)
 
+        core_mem = self.process_mem_info(core_mem, id_list=id_list)
+        memory_snapshot = self.process_mem_info(state, id_list=id_list)
         ori_system_prompt = req.system_prompt or ""
         # logger.info(f"原系统提示词_SimpleMemory:{ori_system_prompt}")
 
