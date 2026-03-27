@@ -126,7 +126,7 @@ class SimpleMemoryPlugin(Star):
                 if entry.get("subject_id") in id_list:
                     id_mem[entry.get("subject_id")].append(f"- {entry.get('content')}, importance: {entry.get('importance')})")
             
-            filtered_entries.extend(f"<subject_id: {id_}>" + "\n".join(entries) + "</subject_id>" for id_, entries in id_mem.items() if entries)
+            filtered_entries.extend(f"<subject_id: {id_}>" + "\n".join(entries) + "\n</subject_id>" for id_, entries in id_mem.items() if entries)
             final_mem_info.append(f"{mem_type}:\n" + "\n".join(filtered_entries) + "\n")
 
         if not final_mem_info:
