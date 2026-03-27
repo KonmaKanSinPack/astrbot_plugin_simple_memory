@@ -275,7 +275,7 @@ class SimpleMemoryPlugin(Star):
 
         subject_id = self.user_roster.id_dict.get(name)
         if subject_id is None:
-            return f"未找到与 name '{name}' 相关的 subject_id。这是当前的 name-subject_id 映射: {self.user_roster}。你可以根据这个内容查看是否有实际上是同一人但名字不同的情况。如果有，你可以调用update_user_roster_id_dict来更新映射列表"
+            return f"未找到与 name '{name}' 相关的 subject_id。这是当前的 name-subject_id 映射: {self.user_roster.id_dict}。你可以根据这个内容查看是否有实际上是同一人但名字不同的情况。如果有，你可以调用update_user_roster_id_dict来更新映射列表"
         else:
             mem_file_path = get_astrbot_data_path() + f"memory_store_{event.unified_msg_origin}.json" if not self.use_global else get_astrbot_data_path() + f"memory_store_global.json"  
             state = MemoryStore(mem_file_path).load()
