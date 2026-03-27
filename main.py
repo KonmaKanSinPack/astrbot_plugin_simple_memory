@@ -235,6 +235,28 @@ class SimpleMemoryPlugin(Star):
         await self.gen(event, extra_prompt=f"这是你之前的记忆，根据这些记忆重构现在的记忆:{state_pre}")
         event.stop_event()
     
+    @filter.llm_tool(name="update_user_roster_id_dict") 
+    async def update_user_roster_id_dict(self, event: AstrMessageEvent, 
+                                name: str = None,
+                                subject_id: str = None
+                                ) -> MessageEventResult:
+
+        '''更新user_roster_id_dict，当大模型发现某个记忆的主体与当前name不匹配但实际上是同一人时，可以调用这个工具来更新映射关系，以便正确检索记忆。
+        
+
+        Args:
+            name (str): 记忆名称。
+            subject_id (str): 该记忆关联的对象/群组 ID（subject_id）
+        '''
+        if name is None:
+            return "必须提供 name 参数。"
+
+        if subject_id is None:
+            return "必须提供 subject_id 参数。"
+
+        self.user_roster.update(name, subject_id)
+        return f"已更新 name '{name}' 与 subject_id '{subject_id}' 的映射关系。"
+
     @filter.llm_tool(name="search_memory_by_name") 
     async def search_memory_by_name(self, event: AstrMessageEvent, 
                                 name: str = None
@@ -253,7 +275,7 @@ class SimpleMemoryPlugin(Star):
 
         subject_id = self.user_roster.id_dict.get(name)
         if subject_id is None:
-            return f"未找到与 name '{name}' 相关的 subject_id。"
+            return f"未找到与 name '{name}' 相关的 subject_id。这是当前的 name-subject_id 映射: {self.user_roster}。你可以根据这个内容查看是否有实际上是同一人但名字不同的情况。如果有，你可以调用update_user_roster_id_dict来更新映射列表"
         else:
             mem_file_path = get_astrbot_data_path() + f"memory_store_{event.unified_msg_origin}.json" if not self.use_global else get_astrbot_data_path() + f"memory_store_global.json"  
             state = MemoryStore(mem_file_path).load()
