@@ -105,7 +105,7 @@ class SimpleMemoryPlugin(Star):
         req.system_prompt = ori_system_prompt + f"\n{mem_prompt}"
         logger.info(f"当前的系统提示词_SimpleMemory:{req.system_prompt}")
 
-        req.prompt = f"[core_memory]: {json.dumps(core_mem, ensure_ascii=False)}\n" + req.prompt    
+        req.prompt = f"<core_memory>: {json.dumps(core_mem, ensure_ascii=False)}\n</core_memory>\n" + req.prompt    
 
     @filter.command_group("mem")
     def mem(self, t):
