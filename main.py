@@ -88,7 +88,8 @@ class SimpleMemoryPlugin(Star):
         mem_file_path = get_astrbot_data_path() + f"memory_store_{uid}.json" if not self.use_global else get_astrbot_data_path() + f"memory_store_global.json"  
         state = MemoryStore(mem_file_path).load()
         state.pop("metadata", None)
-        
+        core_mem = state.get("core_memory", [])
+        state.pop("core_memory", None)
         memory_snapshot = json.dumps(state, ensure_ascii=False, indent=2)
 
         ori_system_prompt = req.system_prompt or ""
@@ -103,6 +104,8 @@ class SimpleMemoryPlugin(Star):
 
         req.system_prompt = ori_system_prompt + f"\n{mem_prompt}"
         logger.info(f"当前的系统提示词_SimpleMemory:{req.system_prompt}")
+
+        req.prompt = f"[core_memory]: {json.dumps(core_mem, ensure_ascii=False)}\n" + req.prompt    
 
     @filter.command_group("mem")
     def mem(self, t):
