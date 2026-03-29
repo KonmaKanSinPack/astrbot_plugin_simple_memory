@@ -330,22 +330,30 @@ class SimpleMemoryPlugin(Star):
                                 subject_id: Optional[str] = None
                                 ) -> MessageEventResult:
 
-        '''增加/更新/删除自己的一条记忆。
-        当需要修改当前看不到的记忆时，请先调用search_memory_by_name来确认记忆的主体和内容，以确保正确修改记忆。
-        大模型可以调用这个工具来修改记忆，调用时请按顺序确保提供正确的参数。
-        当大模型需要增加或更新记忆时，必须提供 memory_type=core_memory|long_term|medium_term、action_type=upsert|delete、memory_id（可以是空字符串或null，系统会自动生成唯一 ID）、content（记忆内容）等参数，category、importance、expires_at、subject_id 可选。
-        当大模型需要删除记忆时，必须提供 memory_type、action_type=delete、memory_id 参数，其他参数不提供。
-         
+        '''精准管理（增加/更新/删除）单条记忆。
+
+        【执行前置检查】
+        - 如果你需要修改或删除一条当前上下文中看不到的记忆，必须先调用 search_memory_by_name 确认该记忆的具体 memory_id。
+
+        【🔴 SUBJECT_ID 绝对规则（极度重要）】
+        - 只要记忆内容与当前交互的用户（或群组）相关（例如：用户的名字、喜好、经历、你们之间的约定），subject_id 必须填写该用户的真实 ID！
+        - 绝对禁止将用户的私人信息存入 "global"！
+        - "global" 仅限用于存放宇宙客观真理、AI 助手自身的全局系统设定。
+
+        【操作动作指南】
+        - 【新增记忆】：action_type="upsert"；memory_id 必须留空（系统会自动生成）；必须提供 content 和 subject_id。
+        - 【更新记忆】：action_type="upsert"；必须提供精准的 memory_id 以覆盖原记忆；必须提供修改后的 content。
+        - 【删除记忆】：action_type="delete"；必须提供精准的 memory_id；其他参数留空。
 
         Args:
-            memory_type (str): 记忆类型(core_memory|long_term|medium_term)。
-            action_type (str): 操作类型(upsert|delete)。
-            memory_id (str): 记忆 ID。
-            content (str, optional): 记忆内容。
-            category (str, optional): 记忆类别(profile|preference|task|fact)。
-            importance (int, optional): 记忆重要性，范围 1-5。
-            expires_at (str, optional): 记忆过期时间，格式为 YYYY-MM-DD。
-            subject_id (str, optional): 该记忆关联的对象/群组 ID（subject_id），如为全局记忆，为 "global"
+            memory_type (str): 记忆所属层级。必填：core_memory(核心档案/事实) | long_term(长期目标/知识) | medium_term(近期连贯主题)。
+            action_type (str): 操作类型。必填：upsert(新增或更新) | delete(删除)。
+            memory_id (str, optional): 记忆的唯一标识符。新增时留空；更新/删除时必填。
+            content (str, optional): 记忆的具体文本内容。upsert 操作时必填。
+            category (str, optional): 记忆类别。可选：profile(档案) | preference(偏好) | task(任务) | fact(事实)。默认 "fact"。
+            importance (int, optional): 记忆重要程度 (1-5的整数)，5为最重要。默认 3。
+            expires_at (str, optional): 记忆过期时间 (YYYY-MM-DD)。留空表示永久有效。
+            subject_id (str, optional): 记忆的归属者 ID。必须是具体的用户 ID，仅客观真理可使用 "global"。
         '''
         
 
