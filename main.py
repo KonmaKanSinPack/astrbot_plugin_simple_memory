@@ -341,14 +341,14 @@ class SimpleMemoryPlugin(Star):
         - "global" 仅限用于存放宇宙客观真理、AI 助手自身的全局系统设定。
 
         【操作动作指南】
-        - 【新增记忆】：action_type="upsert"；memory_id 必须留空（系统会自动生成）；必须提供 content 和 subject_id。
+        - 【新增记忆】：action_type="upsert"；memory_id 必须填入自己生成的唯一标识符；必须提供 content 和 subject_id。
         - 【更新记忆】：action_type="upsert"；必须提供精准的 memory_id 以覆盖原记忆；必须提供修改后的 content。
         - 【删除记忆】：action_type="delete"；必须提供精准的 memory_id；其他参数留空。
 
         Args:
             memory_type (str): 记忆所属层级。必填：core_memory(核心档案/事实) | long_term(长期目标/知识) | medium_term(近期连贯主题)。
             action_type (str): 操作类型。必填：upsert(新增或更新) | delete(删除)。
-            memory_id (str, optional): 记忆的唯一标识符。新增时留空；更新/删除时必填。
+            memory_id (str, optional): 记忆的唯一标识符。新增时自己生成；更新/删除时必填。
             content (str, optional): 记忆的具体文本内容。upsert 操作时必填。
             category (str, optional): 记忆类别。可选：profile(档案) | preference(偏好) | task(任务) | fact(事实)。默认 "fact"。
             importance (int, optional): 记忆重要程度 (1-5的整数)，5为最重要。默认 3。
