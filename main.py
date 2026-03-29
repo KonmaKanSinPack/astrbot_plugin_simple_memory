@@ -152,8 +152,10 @@ class SimpleMemoryPlugin(Star):
         mem_file_path = get_astrbot_data_path() + f"memory_store_{uid}.json" if not self.use_global else get_astrbot_data_path() + f"memory_store_global.json"  
         state = MemoryStore(mem_file_path).load()
         state.pop("metadata", None)
-        # core_mem = {"core_memory": state.get("core_memory", [])}
-        # state.pop("core_memory", None)
+        core_mem = {"core_memory": state.get("core_memory", [])}
+        state.pop("core_memory", None)
+        core_mem_list = []
+        core_mem_info = core_mem_list.append(f"- memory_id:{core_mem.get('memory_id')}, {core_mem.get('content')}, subject_id: {core_mem.get('subject_id')})")
         # memory_snapshot = json.dumps(state, ensure_ascii=False, indent=2)
 
         # core_mem = self.process_mem_info(core_mem, id_list=id_list)
@@ -168,7 +170,7 @@ class SimpleMemoryPlugin(Star):
             "Adjust your responses based on this memory information to ensure they align with your existing knowledge.\n"
         )
 
-        req.system_prompt = ori_system_prompt + f"\n{mem_prompt}"
+        req.system_prompt = ori_system_prompt + f"<core_memory>\n{core_mem_info}</core_memory>\n" +f"\n{mem_prompt}"
         logger.info(f"当前的系统提示词_SimpleMemory:{req.system_prompt}")
 
         # req.prompt = f"<core_memory>: {json.dumps(core_mem, ensure_ascii=False)}\n</core_memory>\n" + req.prompt    
