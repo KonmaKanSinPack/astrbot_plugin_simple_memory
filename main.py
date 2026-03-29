@@ -415,7 +415,7 @@ class SimpleMemoryPlugin(Star):
     async def delete_several_memories(self, 
                                     event: AstrMessageEvent, 
                                     memory_type: str = None,
-                                    memory_ids_to_delete_list: Optional[list] = [],
+                                    memory_ids_to_delete_list: list = [],
                                     ) -> MessageEventResult:
 
         '''精准删除多条类型为memory_type的记忆。
