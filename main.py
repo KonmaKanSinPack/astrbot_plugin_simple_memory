@@ -153,10 +153,11 @@ class SimpleMemoryPlugin(Star):
         state = MemoryStore(mem_file_path).load()
         state.pop("metadata", None)
         core_mem = {"core_memory": state.get("core_memory", [])}
-        
+        logger.info(f"原始记忆快照_core_memory:{core_mem}")
         core_mem_list = []
         for entry in core_mem:
-            core_mem_list.append(f"- memory_id:{entry.get('memory_id')}, {entry.get('content')}, subject_id: {entry.get('subject_id')})")
+            if entry.get("content"):
+                core_mem_list.append(f"- memory_id:{entry.get('memory_id')}, {entry.get('content')}, subject_id: {entry.get('subject_id')})")
         core_mem_info = "\n".join(core_mem_list)
         state.pop("core_memory", None)
         # memory_snapshot = json.dumps(state, ensure_ascii=False, indent=2)
