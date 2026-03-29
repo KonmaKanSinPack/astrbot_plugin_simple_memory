@@ -335,7 +335,7 @@ class SimpleMemoryPlugin(Star):
         【执行前置检查】
         - 如果你需要修改或删除一条当前上下文中看不到的记忆，必须先调用 search_memory_by_name 确认该记忆的具体 memory_id。
 
-        【🔴 SUBJECT_ID 绝对规则（极度重要）】
+        【SUBJECT_ID 绝对规则（极度重要）】
         - 只要记忆内容与当前交互的用户（或群组）相关（例如：用户的名字、喜好、经历、你们之间的约定），subject_id 必须填写该用户的真实 ID！
         - 绝对禁止将用户的私人信息存入 "global"！
         - "global" 仅限用于存放宇宙客观真理、AI 助手自身的全局系统设定。
@@ -410,6 +410,48 @@ class SimpleMemoryPlugin(Star):
         else:
             # await event.send(event.plain_result("Update successful: " + report))
             return report
+        
+    @filter.llm_tool(name="delete_several_memories") 
+    async def update_one_memory(self, event: AstrMessageEvent, 
+                                memory_type: Optional[str] = None,
+                                ids_to_delete_list: Optional[list] = [],
+                                ) -> MessageEventResult:
+
+        '''精准删除多条类位memory_type的记忆。
+
+        【执行前置检查】
+        - 如果你需要删除多条当前上下文中看不到的记忆，必须先调用 search_memory_by_name 确认该记忆的具体 memory_id。
+
+        - 【删除记忆】：ids_to_delete_list:[memory_id1, memory_id2, ...]；必须提供精准的 memory_id 列表。
+
+        Args:
+            ids_to_delete_list (list): 需要删除的 memory_id 列表。
+        '''
+
+        if memory_type not in {"core_memory", "long_term", "medium_term"}:
+            return "无效的记忆类型，memory_type仅支持 core_memory、long_term 或 medium_term。"
+        if not ids_to_delete_list:
+            return "必须提供 ids_to_delete_list"
+        if not isinstance(ids_to_delete_list, list):
+            return "ids_to_delete_list 必须是一个列表，格式示例: [\"memory_id1\", \"memory_id2\", ...]。"
+        
+        if memory_type not in {"core_memory", "long_term", "medium_term"}:
+            return "无效的记忆类型，memory_type仅支持 core_memory、long_term 或 medium_term。"
+      
+        reports = []
+        for memory_id in ids_to_delete_list:
+            operations = {
+                    memory_type: {
+                        "upsert": [],
+                        "delete": [memory_id],
+                    }
+                }
+            mem_to_update = json.dumps(operations, ensure_ascii=False)
+            reports.append(self._handle_apply(event, mem_to_update))
+        
+        report = "\n".join(reports)
+
+        return report
 
     @mem.command("apply")
     async def apply(self, event: AstrMessageEvent):
