@@ -155,7 +155,8 @@ class SimpleMemoryPlugin(Star):
         core_mem = {"core_memory": state.get("core_memory", [])}
         state.pop("core_memory", None)
         core_mem_list = []
-        core_mem_info = core_mem_list.append(f"- memory_id:{core_mem.get('memory_id')}, {core_mem.get('content')}, subject_id: {core_mem.get('subject_id')})")
+        core_mem_list.append(f"- memory_id:{core_mem.get('memory_id')}, {core_mem.get('content')}, subject_id: {core_mem.get('subject_id')})")
+        core_mem_info = "\n".join(core_mem_list)
         # memory_snapshot = json.dumps(state, ensure_ascii=False, indent=2)
 
         # core_mem = self.process_mem_info(core_mem, id_list=id_list)
