@@ -167,12 +167,27 @@ class SimpleMemoryPlugin(Star):
         ori_system_prompt = req.system_prompt or ""
         # logger.info(f"原系统提示词_SimpleMemory:{ori_system_prompt}")
 
+        # 先计算出当前的具体身份信息
+        current_user_id = subject_id if msg_type != "GroupMessage" else self.user_roster.id_dict.get(sender_name, "unknown")
+        current_group_id = subject_id if msg_type == "GroupMessage" else "None (Private Chat)"
+        
+        # 组装带有强制约束的 Prompt
         mem_prompt = (
-            "\n\n[Memory Info]\n"
-            "You have access to the following memory information: core memory, long-term and medium-term memories. Use this context when generating responses to maintain consistency and coherence across interactions.\n"
-            f"<core_memory>\n{core_mem_info}\n</core_memory>\n" 
+            "\n\n====================\n"
+            "### [CURRENT CHAT CONTEXT] ###\n"
+            f"- 当前正在对你说话的用户名字 (Sender Name): {sender_name}\n"
+            f"- 当前用户的专属 ID (User ID): {current_user_id}\n"
+            f"- 当前所在的群组 ID (Group ID): {current_group_id}\n\n"
+            
+            "### [MEMORY SYSTEM RULES - STRICT] ###\n"
+            "1. 你拥有被 <subject_id: xxx> 标记的分类记忆。\n"
+            f"2. 极其重要：除了 global 记忆外，你只能将带有 <subject_id: {current_user_id}> 或 <subject_id: {current_group_id}> 的记忆应用到当前用户身上！\n"
+            f"3. 绝对禁止将其他用户的记忆（如提到其他 subject_id 的内容）当作当前用户 ({sender_name}) 的经历！如果记忆里的 subject_id 与当前 User ID 不匹配，说明那是别人的事，请保持客观，不要张冠李戴。\n\n"
+            
+            "### [RETRIEVED MEMORIES] ###\n"
+            f"<core_memory>\n{core_mem_info}\n</core_memory>\n"
             f"{memory_snapshot}\n"
-            "Adjust your responses based on this memory information to ensure they align with your existing knowledge.\n"
+            "====================\n"
         )
 
         req.system_prompt = ori_system_prompt +f"\n{mem_prompt}"
