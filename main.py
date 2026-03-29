@@ -412,7 +412,7 @@ class SimpleMemoryPlugin(Star):
             return report
         
     @filter.llm_tool(name="delete_several_memories") 
-    async def update_one_memory(self, event: AstrMessageEvent, 
+    async def delete_several_memories(self, event: AstrMessageEvent, 
                                 memory_type: Optional[str] = None,
                                 ids_to_delete_list: Optional[list] = [],
                                 ) -> MessageEventResult:
