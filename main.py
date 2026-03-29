@@ -412,32 +412,34 @@ class SimpleMemoryPlugin(Star):
             return report
         
     @filter.llm_tool(name="delete_several_memories") 
-    async def delete_several_memories(self, event: AstrMessageEvent, 
-                                memory_type: Optional[str] = None,
-                                ids_to_delete_list: Optional[list] = [],
-                                ) -> MessageEventResult:
+    async def delete_several_memories(self, 
+                                    event: AstrMessageEvent, 
+                                    memory_type: Optional[str] = None,
+                                    memory_ids_to_delete_list: Optional[list] = [],
+                                    ) -> MessageEventResult:
 
-        '''精准删除多条类位memory_type的记忆。
+        '''精准删除多条类型为memory_type的记忆。
 
         【执行前置检查】
         - 如果你需要删除多条当前上下文中看不到的记忆，必须先调用 search_memory_by_name 确认该记忆的具体 memory_id。
 
-        - 【删除记忆】：ids_to_delete_list:[memory_id1, memory_id2, ...]；必须提供精准的 memory_id 列表。
+        - 【删除记忆】：需要提供memory_type和memory_ids_to_delete_list；必须提供精准的 memory_id 列表。
 
         Args:
-            ids_to_delete_list (list): 需要删除的 memory_id 列表。
+            memory_type: (str) : 需要删除的记忆所属层级。必填：core_memory(核心档案/事实) | long_term(长期目标/知识) | medium_term(近期连贯主题)。,
+            memory_ids_to_delete_list (list): 需要删除的 memory_id 列表[memory_id1, memory_id2, ...]。
         '''
 
         if memory_type not in {"core_memory", "long_term", "medium_term"}:
-            return "无效的记忆类型，必须提供 memory_type，且memory_type仅支持 core_memory、long_term 或 medium_term。"
-        if not ids_to_delete_list:
-            return "必须提供 ids_to_delete_list"
-        if not isinstance(ids_to_delete_list, list):
-            return "ids_to_delete_list 必须是一个列表，格式示例: [\"memory_id1\", \"memory_id2\", ...]。"
+            return "无效的记忆类型，必须提供 memory_type参数，且memory_type仅支持 core_memory、long_term 或 medium_term。"
+        if not memory_ids_to_delete_list:
+            return "必须提供 memory_ids_to_delete_list参数"
+        if not isinstance(memory_ids_to_delete_list, list):
+            return "memory_ids_to_delete_list 必须是一个列表，格式示例: [\"memory_id1\", \"memory_id2\", ...]。"
         
       
         reports = []
-        for memory_id in ids_to_delete_list:
+        for memory_id in memory_ids_to_delete_list:
             operations = {
                     memory_type: {
                         "upsert": [],
