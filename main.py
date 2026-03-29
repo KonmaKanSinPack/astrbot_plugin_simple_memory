@@ -124,7 +124,7 @@ class SimpleMemoryPlugin(Star):
             id_mem = {id_: [] for id_ in id_list}
             for entry in mem_entries:
                 if entry.get("subject_id") in id_list:
-                    id_mem[entry.get("subject_id")].append(f"- memory_id:{entry.get('memory_id')}, {entry.get('content')}, importance: {entry.get('importance')})")
+                    id_mem[entry.get("subject_id")].append(f"- memory_id:{entry.get('memory_id')}, {entry.get('content')}, subject_id: {entry.get('subject_id')})")
             
             filtered_entries.extend(f"<subject_id: {id_}>" + "\n".join(entries) + "\n</subject_id>" for id_, entries in id_mem.items() if entries)
             final_mem_info.append(f"{mem_type}:\n" + "\n".join(filtered_entries) + "\n")
