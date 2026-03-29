@@ -429,14 +429,12 @@ class SimpleMemoryPlugin(Star):
         '''
 
         if memory_type not in {"core_memory", "long_term", "medium_term"}:
-            return "无效的记忆类型，memory_type仅支持 core_memory、long_term 或 medium_term。"
+            return "无效的记忆类型，必须提供 memory_type，且memory_type仅支持 core_memory、long_term 或 medium_term。"
         if not ids_to_delete_list:
             return "必须提供 ids_to_delete_list"
         if not isinstance(ids_to_delete_list, list):
             return "ids_to_delete_list 必须是一个列表，格式示例: [\"memory_id1\", \"memory_id2\", ...]。"
         
-        if memory_type not in {"core_memory", "long_term", "medium_term"}:
-            return "无效的记忆类型，memory_type仅支持 core_memory、long_term 或 medium_term。"
       
         reports = []
         for memory_id in ids_to_delete_list:
