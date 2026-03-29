@@ -87,10 +87,18 @@ class UserRoster:
             json.dumps(state, ensure_ascii=False, indent=2), encoding="utf-8"
         )
 
-    def update(self, k, v):
-        self.id_dict[k] = v
-        self.save(self.id_dict)
+    def update(self, k, v=None, delete=False):
+        if not delete:  
+            self.id_dict[k] = v
+            self.save(self.id_dict)
+        else:
+            if k in self.id_dict:
+                del self.id_dict[k]
+                self.save(self.id_dict)
         logger.info(f"当前字典：{self.id_dict}")
+
+    def check(self):
+        return self.id_dict
 
 @dataclass
 class UpsertResult:
@@ -260,11 +268,12 @@ class SimpleMemoryPlugin(Star):
     @filter.llm_tool(name="update_user_roster_id_dict") 
     async def update_user_roster_id_dict(self, event: AstrMessageEvent, 
                                 name: str = None,
-                                subject_id: str = None
+                                subject_id: str = None,
+                                delete: bool = False    
                                 ) -> MessageEventResult:
 
         '''更新user_roster_id_dict，当大模型发现某个记忆的主体与当前name不匹配但实际上是同一人时，可以调用这个工具来更新映射关系，以便正确检索记忆。
-        
+        当大模型需要更新映射关系时，必须提供 name 和 subject_id 参数。当需要删除映射关系时，提供 name 参数和 delete=True 即可，subject_id 参数可选。
 
         Args:
             name (str): 记忆名称。
@@ -273,10 +282,10 @@ class SimpleMemoryPlugin(Star):
         if name is None:
             return "必须提供 name 参数。"
 
-        if subject_id is None:
+        if subject_id is None and not delete:
             return "必须提供 subject_id 参数。"
-
-        self.user_roster.update(name, subject_id)
+    
+        self.user_roster.update(name, subject_id, delete=delete)
         return f"已更新 name '{name}' 与 subject_id '{subject_id}' 的映射关系。"
 
     @filter.llm_tool(name="search_memory_by_name") 
@@ -303,6 +312,11 @@ class SimpleMemoryPlugin(Star):
             state = MemoryStore(mem_file_path).load()
             mem_info = self.process_mem_info(state, id_list=[subject_id])
             return mem_info
+
+    @filter.llm_tool(name="check_user_roster_id_dict")
+    async def check_user_roster_id_dict(self, event: AstrMessageEvent) -> MessageEventResult:
+        '''检查当前的 name-subject_id 映射关系。'''
+        return self.user_roster.id_dict
 
     @filter.llm_tool(name="update_one_memory") 
     async def update_one_memory(self, event: AstrMessageEvent, 
