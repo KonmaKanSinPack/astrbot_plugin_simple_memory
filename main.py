@@ -414,7 +414,7 @@ class SimpleMemoryPlugin(Star):
     @filter.llm_tool(name="delete_several_memories") 
     async def delete_several_memories(self, 
                                     event: AstrMessageEvent, 
-                                    memory_type: Optional[str] = None,
+                                    memory_type: str = None,
                                     memory_ids_to_delete_list: Optional[list] = [],
                                     ) -> MessageEventResult:
 
@@ -426,7 +426,7 @@ class SimpleMemoryPlugin(Star):
         - 【删除记忆】：需要提供memory_type和memory_ids_to_delete_list；必须提供精准的 memory_id 列表。
 
         Args:
-            memory_type: (str) : 需要删除的记忆所属层级。必填：core_memory(核心档案/事实) | long_term(长期目标/知识) | medium_term(近期连贯主题)。,
+            memory_type (str): 需要删除的记忆所属层级。必填：core_memory(核心档案/事实) | long_term(长期目标/知识) | medium_term(近期连贯主题)。,
             memory_ids_to_delete_list (list): 需要删除的 memory_id 列表[memory_id1, memory_id2, ...]。
         '''
 
