@@ -267,26 +267,28 @@ class SimpleMemoryPlugin(Star):
     
     @filter.llm_tool(name="update_user_roster_id_dict") 
     async def update_user_roster_id_dict(self, event: AstrMessageEvent, 
-                                name: str = None,
+                                user_name: str = None,
                                 subject_id: str = None,
                                 delete: bool = False    
                                 ) -> MessageEventResult:
 
-        '''更新user_roster_id_dict，当大模型发现某个记忆的主体与当前name不匹配但实际上是同一人时，可以调用这个工具来更新映射关系，以便正确检索记忆。
-        当大模型需要更新映射关系时，必须提供 name 和 subject_id 参数。当需要删除映射关系时，提供 name 参数和 delete=True 即可，subject_id 参数可选。
+        '''更新user_roster_id_dict，当大模型发现某个记忆的主体与当前user_name不匹配但实际上是同一人时，可以调用这个工具来更新映射关系，以便正确检索记忆。
+        当发现有错误的映射关系时也可以提供 user_name 和 subject_id 参数来更新，或者提供 user_name 和 delete=True 来删除错误的映射关系。
+        当大模型需要更新映射关系时，必须提供 user_name 和 subject_id 参数。当需要删除映射关系时，提供 user_name 参数和 delete=True 即可，subject_id 参数可选。
 
         Args:
-            name (str): 记忆名称。
-            subject_id (str): 该记忆关联的对象/群组 ID（subject_id）
+            user_name (str): 用户名字。
+            subject_id (str): 该用户关联的对象/群组 ID（subject_id）
+            delete (bool): 是否删除该映射关系，默认为 False（即更新/添加）。如果为 True，则根据 user_name 删除映射关系。
         '''
-        if name is None:
-            return "必须提供 name 参数。"
+        if user_name is None:
+            return "必须提供 user_name 参数。"
 
         if subject_id is None and not delete:
             return "必须提供 subject_id 参数。"
     
-        self.user_roster.update(name, subject_id, delete=delete)
-        return f"已更新 name '{name}' 与 subject_id '{subject_id}' 的映射关系。"
+        self.user_roster.update(user_name, subject_id, delete=delete)
+        return f"已更新 user_name '{user_name}' 与 subject_id '{subject_id}' 的映射关系。"
 
     @filter.llm_tool(name="search_memory_by_user_name") 
     async def search_memory_by_user_name(self, event: AstrMessageEvent, 
