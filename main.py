@@ -64,7 +64,7 @@ class MemoryStore:
 
 class UserRoster:
     def __init__(self: str):
-        path = get_astrbot_data_path() + f"user_roster.json"
+        path = os.path.join(get_astrbot_data_path(), "user_roster.json")
         self.path = Path(path)
         self.id_dict = self.load()
 
@@ -157,7 +157,7 @@ class SimpleMemoryPlugin(Star):
             if sender_name not in self.user_roster.id_dict and msg_type != "GroupMessage":
                 self.user_roster.update(sender_name, subject_id)
 
-        mem_file_path = get_astrbot_data_path() + f"memory_store_{uid}.json" if not self.use_global else get_astrbot_data_path() + f"memory_store_global.json"  
+        mem_file_path = os.path.join(get_astrbot_data_path(), "memory_store_global.json") if self.use_global else os.path.join(get_astrbot_data_path(), f"memory_store_{uid}.json")
         state = MemoryStore(mem_file_path).load()
         state.pop("metadata", None)
         core_mem = state.get("core_memory", [])
@@ -248,8 +248,8 @@ class SimpleMemoryPlugin(Star):
         适用于需要重构记忆的场景
         '''
         uid = event.unified_msg_origin
-        mem_path = get_astrbot_data_path() + f"memory_store_{uid}.json" if not self.use_global else get_astrbot_data_path() + f"memory_store_global.json"  
-        pre_mem_path = get_astrbot_data_path() + f"memory_store_{uid}_pre.json" if not self.use_global else get_astrbot_data_path() + f"memory_store_global_pre.json"  
+        mem_path = os.path.join(get_astrbot_data_path(), f"memory_store_{uid}.json") if not self.use_global else os.path.join(get_astrbot_data_path(), "memory_store_global.json")
+        pre_mem_path = os.path.join(get_astrbot_data_path(), f"memory_store_{uid}_pre.json") if not self.use_global else os.path.join(get_astrbot_data_path(), "memory_store_global_pre.json")
         if os.path.exists(pre_mem_path):
             state_pre = MemoryStore(pre_mem_path).load()
         else:
@@ -309,7 +309,7 @@ class SimpleMemoryPlugin(Star):
         if subject_id is None:
             return f"未找到与 user_name '{user_name}' 相关的 subject_id。这是当前的 user_name-subject_id 映射: {self.user_roster.id_dict}。你可以根据这个内容查看是否有实际上是同一人但名字不同的情况。如果有，你必须调用update_user_roster_id_dict来把当前的user_name更新映射列表"
         else:
-            mem_file_path = get_astrbot_data_path() + f"memory_store_{event.unified_msg_origin}.json" if not self.use_global else get_astrbot_data_path() + f"memory_store_global.json"  
+            mem_file_path = os.path.join(get_astrbot_data_path(), f"memory_store_{event.unified_msg_origin}.json") if not self.use_global else os.path.join(get_astrbot_data_path(), "memory_store_global.json")
             state = MemoryStore(mem_file_path).load()
             mem_info = self.process_mem_info(state, id_list=[subject_id])
             return mem_info
