@@ -188,9 +188,8 @@ class SimpleMemoryPlugin(Star):
             f"- 当前所在的群组 ID (Group ID): {current_group_id}\n\n"
             
             "### [MEMORY SYSTEM RULES - STRICT] ###\n"
-            "1. 你拥有被 <subject_id: xxx> 标记的分类记忆。\n"
-            f"2. 极其重要：除了 global 记忆外，你只能将带有 <subject_id: {current_user_id}> 或 <subject_id: {current_group_id}> 的记忆应用到当前用户身上！\n"
-            f"3. 绝对禁止将其他用户的记忆（如提到其他 subject_id 的内容）当作当前用户 ({sender_name}) 的经历！如果记忆里的 subject_id 与当前 User ID 不匹配，说明那是别人的事，请保持客观，不要张冠李戴。\n\n"
+            f"1. 极其重要：除了 global 记忆外，你只能将带有 <subject_id: {current_user_id}> 或 <subject_id: {current_group_id}> 的记忆应用到当前用户身上！\n"
+            f"2. 绝对禁止将其他用户的记忆（如提到其他 subject_id 的内容）当作当前用户 ({sender_name}) 的经历！如果记忆里的 subject_id 与当前 User ID 不匹配，说明那是别人的事，请保持客观，不要张冠李戴。\n\n"
             
             "### [RETRIEVED MEMORIES] ###\n"
             f"<core_memory>\n{core_mem_info}\n</core_memory>\n"
