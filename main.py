@@ -158,8 +158,8 @@ class SimpleMemoryPlugin(Star):
                 self.user_roster.update(sender_name, subject_id)
 
         mem_file_path = os.path.join(get_astrbot_data_path(), "memory_store_global.json") if self.use_global else os.path.join(get_astrbot_data_path(), f"memory_store_{uid}.json")
+        logger.info(f"当前路径: {mem_file_path}")
         state = MemoryStore(mem_file_path).load()
-        state.pop("metadata", None)
         core_mem = state.get("core_memory", [])
         # logger.info(f"原始记忆快照_core_memory:{core_mem}")
         core_mem_list = []
