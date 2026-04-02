@@ -539,7 +539,7 @@ class SimpleMemoryPlugin(Star):
         #     return "请在 prompt 子命令后附带对话文本，例如 /memory prompt 最近的对话内容。"
 
         uid = event.unified_msg_origin
-        mem_file_path = get_astrbot_data_path() + f"memory_store_{uid}.json" if not self.use_global else get_astrbot_data_path() + f"memory_store_global.json"  
+        mem_file_path = os.path.join(get_astrbot_data_path(), f"memory_store_{uid}.json") if not self.use_global else os.path.join(get_astrbot_data_path(), "memory_store_global.json")
         if not Path(mem_file_path).exists() or full:
             task_prompt = "please refresh core/long-term/medium-term memory based on the entire conversation.\n"
         else:
@@ -621,7 +621,7 @@ class SimpleMemoryPlugin(Star):
                 return f"JSON parsing failed: {exc}"
 
         uid = event.unified_msg_origin
-        mem_file_path = get_astrbot_data_path() + f"memory_store_{uid}.json" if not self.use_global else get_astrbot_data_path() + f"memory_store_global.json"  
+        mem_file_path = os.path.join(get_astrbot_data_path(), f"memory_store_{uid}.json") if not self.use_global else os.path.join(get_astrbot_data_path(), "memory_store_global.json")
         store = MemoryStore(mem_file_path)
         state = store.load()
 
