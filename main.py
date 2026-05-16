@@ -107,7 +107,7 @@ class UpsertResult:
     deleted: int = 0
 
 
-@register("simple_memory", "兔子", "为大模型提供结构化记忆提示词", "1.3.1")
+@register("simple_memory", "兔子", "为大模型提供结构化记忆提示词", "1.3.2")
 class SimpleMemoryPlugin(Star):
     def __init__(self, context: Context, config: AstrBotConfig):
         super().__init__(context)
@@ -189,7 +189,10 @@ class SimpleMemoryPlugin(Star):
             
             "### [MEMORY SYSTEM RULES - STRICT] ###\n"
             f"1. 极其重要：除了 global 记忆外，你只能将带有 <subject_id: {current_user_id}> 或 <subject_id: {current_group_id}> 的记忆应用到当前用户身上！\n"
-            f"2. 绝对禁止将其他用户的记忆（如提到其他 subject_id 的内容）当作当前用户 ({sender_name}) 的经历！如果记忆里的 subject_id 与当前 User ID 不匹配，说明那是别人的事，请保持客观，不要张冠李戴。\n\n"
+            f"2. 绝对禁止将其他用户的记忆（如提到其他 subject_id 的内容）当作当前用户 ({sender_name}) 的经历！如果记忆里的 subject_id 与当前 User ID 不匹配，说明那是别人的事，请保持客观，不要张冠李戴。\n"
+            "3. core_memory 只表示 AI 自身人格、灵魂、价值观、思考方式、表达风格、稳定自我认知等高度抽象且长期稳定的内容。\n"
+            "4. core_memory 绝对不是具体事实仓库，不应被理解为某个用户资料、某次对话经过、一次性事件、临时任务或外部世界的具体事实清单。\n"
+            "5. 阅读和使用 core_memory 时，只能把它当作 AI 的人格底色与内在原则；如果内容是具体事实，应优先从 long_term 或 medium_term 理解。\n\n"
             
             "### [RETRIEVED MEMORIES] ###\n"
             f"<core_memory>\n{core_mem_info}\n</core_memory>\n"
@@ -340,13 +343,18 @@ class SimpleMemoryPlugin(Star):
         - 绝对禁止将用户的私人信息存入 "global"！
         - "global" 仅限用于存放宇宙客观真理、AI 助手自身的全局系统设定。
 
+        【CORE_MEMORY 绝对规则（极度重要）】
+        - core_memory 只允许存放 AI 自身人格、灵魂、价值观、思考方式、表达风格、稳定自我认知等高度抽象且长期稳定的内容。
+        - core_memory 绝对禁止存放具体事实，例如：某个用户的资料、某次对话里发生的事、一次性见闻、临时任务、具体事件记录、外部世界的普通事实条目。
+        - 任何准备写入 core_memory 的 content 都必须满足上述要求；如果是具体事实，请改写入 long_term 或 medium_term，而不是 core_memory。
+
         【操作动作指南】
         - 【新增记忆】：action_type="upsert"；memory_id 必须填入自己生成的唯一标识符；必须提供 content 和 subject_id。
         - 【更新记忆】：action_type="upsert"；必须提供精准的 memory_id 以覆盖原记忆；必须提供修改后的 content。
         - 【删除记忆】：action_type="delete"；必须提供精准的 memory_id；其他参数留空。
 
         Args:
-            memory_type (str): 记忆所属层级。必填：core_memory(核心档案/事实) | long_term(长期目标/知识) | medium_term(近期连贯主题)。
+            memory_type (str): 记忆所属层级。必填：core_memory(AI 人格/灵魂层面的稳定自我认知，不存具体事实) | long_term(长期目标/知识/可复用事实) | medium_term(近期连贯主题/阶段性事实)。
             action_type (str): 操作类型。必填：upsert(新增或更新) | delete(删除)。
             memory_id (str, optional): 记忆的唯一标识符。新增时自己生成；更新/删除时必填。
             content (str, optional): 记忆的具体文本内容。upsert 操作时必填。
@@ -557,8 +565,11 @@ class SimpleMemoryPlugin(Star):
             "3. Keep your memory concise, focused, and up-to-date. Remove any redundant, obsolete, or trivial information.\n"
             "4. Only retain information that is useful for future reasoning, continuity, or identity.\n"
             "5. When in doubt, prefer fewer, higher-quality memories over more, lower-quality ones.\n"
-            "6. Ensure that core memory remains stable and only changes when absolutely necessary.\n"
-            "7. short-term memory is not needed to generate. Make sure all memory you generate is either core, long-term, or medium-term.\n"
+            "6. Core memory must remain stable and only change when absolutely necessary.\n"
+            "7. Core memory is reserved only for the AI's persona, soul-level self-concept, values, worldview, thinking patterns, and enduring inner principles.\n"
+            "8. Do NOT store concrete facts in core memory, including user profile facts, specific conversation events, one-off experiences, temporary tasks, or ordinary world facts; those belong in long_term or medium_term.\n"
+            "9. Any new content written into core_memory must strictly follow the rule above.\n"
+            "10. short-term memory is not needed to generate. Make sure all memory you generate is either core, long-term, or medium-term.\n"
             "\n**[Current Memory Snapshot]**\n"
             f"{memory_snapshot}"
             "\n**[Current subject_id]，use it if this memory is associated with a specific user or group**\n"
@@ -571,9 +582,10 @@ class SimpleMemoryPlugin(Star):
             self.config.get("mem_prompt", "") +
             "output JSON with the following sections (each is required and serves a distinct purpose):\n"
             "- summary: concise highlights of any changes across memories.\n"
-            "- core_memory: enduring identity/profile/preferences/facts; anchor for consistency and rarely changes.\n"
-            "- long_term: durable knowledge/goals worth keeping across many sessions; update cautiously.\n"
-            "- medium_term: active themes/tasks spanning recent sessions that aid continuity.\n"
+            "- core_memory: only the AI's enduring persona, soul-level self-concept, values, worldview, and thinking style; never concrete user facts, event records, or ordinary factual notes.\n"
+            "- long_term: durable knowledge, goals, reusable user facts, and other concrete information worth keeping across many sessions; update cautiously.\n"
+            "- medium_term: active themes, recent continuity, short-to-mid horizon tasks, and concrete contextual facts spanning recent sessions.\n"
+            "Special rule: if a memory is concrete and factual, it must not go into core_memory even if it feels important.\n"
             "JSON Format:\n"
             "{\n"
             "  \"summary\": {\n"
